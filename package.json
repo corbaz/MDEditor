@@ -1,0 +1,65 @@
+{
+  "name": "md-editor",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Desktop Markdown editor with MDXEditor",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"bun run dev:renderer\" \"bun run dev:electron\"",
+    "dev:renderer": "vite",
+    "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "dist:mac": "bun run build && electron-builder --mac --arm64",
+    "dist:win": "bun run build && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "@mdxeditor/editor": "^4.0.1",
+    "react": "^19.2.6",
+    "react-diff-view": "^3.3.3",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1",
+    "eslint": "^10.4.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.60.0",
+    "vite": "^8.0.14",
+    "wait-on": "^9.0.10"
+  },
+  "build": {
+    "appId": "com.jucorbaz.mdeditor",
+    "productName": "MD Editor",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  }
+}

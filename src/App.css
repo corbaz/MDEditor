@@ -1,0 +1,28 @@
+.app {
+  min-height: 100vh;
+  padding: 20px;
+  background: #f3f4f6;
+}
+
+.appHeader {
+  margin-bottom: 12px;
+}
+
+.appHeader h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.editorWrap {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  min-height: calc(100vh - 88px);
+  overflow: hidden;
+}
+
+.editor {
+  padding: 16px;
+  min-height: calc(100vh - 120px);
+}
