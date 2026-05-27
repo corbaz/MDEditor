@@ -1,6 +1,8 @@
-export {}
+import type PrismNamespace from 'prismjs'
 
 declare global {
+  var Prism: typeof PrismNamespace
+
   interface Window {
     electronAPI?: {
       readLocalImageAsDataUrl: (filePath: string) => Promise<string>

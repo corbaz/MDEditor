@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import './prism-shim'
 import './index.css'
 import '@mdxeditor/editor/style.css'
 import App from './App.tsx'
