@@ -7,19 +7,23 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"bun run dev:renderer\" \"bun run dev:electron\"",
-    "dev:renderer": "vite",
+    "dev:renderer": "vite --host",
     "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "dist:mac": "bun run build && electron-builder --mac --arm64",
-    "dist:win": "bun run build && electron-builder --win nsis --x64"
+    "dist:mac": "bun run build && electron-builder --mac --arm64 --publish never",
+    "dist:win": "bun run build && electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "@mdxeditor/editor": "^4.0.1",
+    "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-diff-view": "^3.3.3",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
