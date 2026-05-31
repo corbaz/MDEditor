@@ -246,7 +246,7 @@ const KNOWN_HTML_ELEMENTS = new Set([
     'wbr',
 ]);
 
-const normalizeMarkdownForRichEditor = (value: string): string => {
+export const normalizeMarkdownForRichEditor = (value: string): string => {
     // Step 1: strip HTML tags from heading lines (e.g. ## Heading <br/>)
     const withNormalizedHeadings = value
         .split('\n')
@@ -297,7 +297,7 @@ const normalizeMarkdownForRichEditor = (value: string): string => {
     return withEscapedBraces.replace(/(?<!\\)<(?![a-zA-Z/!?])/g, '\\<');
 };
 
-const decodePdfDataUrl = (dataUrl: string) => {
+export const decodePdfDataUrl = (dataUrl: string) => {
     const [, base64 = ''] = dataUrl.split(',', 2);
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -316,13 +316,13 @@ const PDF_IMAGE_OPS = new Set([82, 83, 85, 88]); // paintJpegXObject | paintInli
 const PDF_MIN_IMAGE_PX = 50; // skip icons / decorations smaller than this
 
 /** Font size from a pdfjs text matrix [a, b, c, d, x, y]. */
-const getItemFontSize = (transform: number[] | undefined): number => {
+export const getItemFontSize = (transform: number[] | undefined): number => {
     if (!transform || transform.length < 2) return 0;
     return Math.round(Math.sqrt(transform[0] ** 2 + transform[1] ** 2));
 };
 
 /** Determine font-size thresholds for h1/h2/h3 based on the modal body size. */
-const computeHeadingThresholds = (
+export const computeHeadingThresholds = (
     sizes: number[]
 ): { h1: number; h2: number; h3: number; body: number } => {
     const pos = sizes.filter((s) => s > 0);
@@ -336,7 +336,7 @@ const computeHeadingThresholds = (
 };
 
 /** Group pdfjs text items into visual lines sorted top → bottom. */
-const groupItemsIntoLines = (items: PdfTextItem[]): PdfRawLine[] => {
+export const groupItemsIntoLines = (items: PdfTextItem[]): PdfRawLine[] => {
     const Y_TOL = 2;
     const groups = new Map<
         number,
@@ -528,7 +528,7 @@ const extractPageImages = async (
 };
 
 /** Build the markdown block for a single PDF page (no page-header wrapper). */
-const buildPageMarkdown = (
+export const buildPageMarkdown = (
     lines: PdfRawLine[],
     images: string[],
     thresholds: { h1: number; h2: number; h3: number; body: number },
@@ -743,16 +743,16 @@ const getReadableMarkdown = (value: string) =>
         (match) => `${match.slice(0, 100)}...`
     );
 
-const getByteSize = (value: string) => new Blob([value]).size;
+export const getByteSize = (value: string) => new Blob([value]).size;
 
-const formatFileSize = (bytes: number) => {
+export const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024)
         return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
 };
 
-const formatSavedAt = (value: number | null, locale: Locale) => {
+export const formatSavedAt = (value: number | null, locale: Locale) => {
     if (!value) return locale === 'es' ? 'sin guardar' : 'not saved';
 
     return new Intl.DateTimeFormat(locale === 'es' ? 'es-AR' : 'en-US', {
@@ -762,6 +762,13 @@ const formatSavedAt = (value: number | null, locale: Locale) => {
         hour: '2-digit',
         minute: '2-digit',
     }).format(new Date(value));
+};
+
+export const normalizeFileName = (value: string) => {
+    const trimmed = value.trim() || 'untitled.md';
+    return trimmed.toLowerCase().endsWith('.md')
+        ? trimmed
+        : `${trimmed}.md`;
 };
 
 const fileToBase64 = async (file: File) => {
@@ -779,7 +786,7 @@ const fileToBase64 = async (file: File) => {
     return btoa(binary);
 };
 
-const escapeHtml = (value: string) =>
+export const escapeHtml = (value: string) =>
     value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -787,13 +794,13 @@ const escapeHtml = (value: string) =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-const sanitizeStyleValue = (value: string) =>
+export const sanitizeStyleValue = (value: string) =>
     value.replace(/[;"<>]/g, '').trim();
 
-const escapeRegExp = (value: string) =>
+export const escapeRegExp = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const getStyleDeclaration = (kind: InlineStyleKind, value: string) => {
+export const getStyleDeclaration = (kind: InlineStyleKind, value: string) => {
     const cleanValue = sanitizeStyleValue(value);
     if (kind === 'textColor') return { property: 'color', value: cleanValue };
     if (kind === 'highlight')
@@ -801,7 +808,7 @@ const getStyleDeclaration = (kind: InlineStyleKind, value: string) => {
     return { property: 'font-family', value: cleanValue };
 };
 
-const mergeStyle = (
+export const mergeStyle = (
     currentStyle: string,
     kind: InlineStyleKind,
     value: string
@@ -828,7 +835,7 @@ const mergeStyle = (
         .join('; ');
 };
 
-const getStyledMarkdown = (
+export const getStyledMarkdown = (
     kind: InlineStyleKind,
     value: string,
     selectionText: string
@@ -837,7 +844,7 @@ const getStyledMarkdown = (
     return `<span style="${mergeStyle('', kind, value)}">${content}</span>`;
 };
 
-const replaceSelectedTextInMarkdown = (
+export const replaceSelectedTextInMarkdown = (
     source: string,
     selectedText: string,
     kind: InlineStyleKind,
@@ -1632,13 +1639,6 @@ function App() {
         pdfViewerDocument,
         waitForPreviewAssets,
     ]);
-
-    const normalizeFileName = (value: string) => {
-        const trimmed = value.trim() || 'untitled.md';
-        return trimmed.toLowerCase().endsWith('.md')
-            ? trimmed
-            : `${trimmed}.md`;
-    };
 
     const createNewDocument = async () => {
         await persistLatestDocument(fileName, getContent(), true);
