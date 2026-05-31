@@ -6,6 +6,7 @@
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
+    "ncu": "ncu -u && bun install --minimum-release-age 0",
     "dev": "concurrently -k \"bun run dev:renderer\" \"bun run dev:electron\"",
     "dev:renderer": "vite --host",
     "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
@@ -13,11 +14,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "dist:mac": "bun run build && electron-builder --mac --arm64 --publish never",
-    "dist:win": "bun run build && electron-builder --win nsis --x64 --publish never"
+    "dist:win": "bun run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-win.ps1"
   },
   "dependencies": {
     "@mdxeditor/editor": "^4.0.1",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.17.0",
+    "pdfjs-dist": "^6.0.227",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
@@ -31,11 +33,11 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.0",
     "cross-env": "^10.1.0",
     "electron": "^42.3.0",
     "electron-builder": "^26.8.1",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
@@ -48,22 +50,25 @@
     "appId": "com.jucorbaz.mdeditor",
     "productName": "MD Editor",
     "directories": {
-      "output": "release"
+      "output": "release-win"
     },
     "files": [
       "dist/**/*",
       "electron/**/*"
     ],
     "mac": {
+      "icon": "public/app-icon.png",
       "target": [
         "dmg"
       ],
       "category": "public.app-category.productivity"
     },
     "win": {
+      "icon": "build/app-icon.ico",
       "target": [
         "nsis"
-      ]
+      ],
+      "signAndEditExecutable": false
     }
   }
 }

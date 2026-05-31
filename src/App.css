@@ -1,7 +1,57 @@
 .app {
+  --app-bg: #f3f4f6;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f3f4f6;
+  --app-text: #111827;
+  --app-muted: #4b5563;
+  --app-control-text: #374151;
+  --app-border: #d1d5db;
+  --app-border-soft: #e5e7eb;
+  --app-shadow: rgba(15, 23, 42, 0.16);
+  --app-active-bg: #111827;
+  --app-active-text: #ffffff;
+  --app-danger: #b91c1c;
+  --app-danger-bg: #fef2f2;
+  --app-danger-border: #fecaca;
+  --app-overlay: rgba(17, 24, 39, 0.38);
   min-height: 100vh;
   padding: 20px;
-  background: #f3f4f6;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.app.dark-theme {
+  --app-bg: #0f172a;
+  --app-surface: #111827;
+  --app-surface-muted: #1f2937;
+  --app-text: #f9fafb;
+  --app-muted: #cbd5e1;
+  --app-control-text: #e5e7eb;
+  --app-border: #334155;
+  --app-border-soft: #263244;
+  --app-shadow: rgba(0, 0, 0, 0.34);
+  --app-active-bg: #e5e7eb;
+  --app-active-text: #111827;
+  --app-danger: #fca5a5;
+  --app-danger-bg: #451a1a;
+  --app-danger-border: #7f1d1d;
+  --app-overlay: rgba(2, 6, 23, 0.62);
+}
+
+:root[data-app-theme='dark'] {
+  --basePageBg: #111827;
+  --baseBase: #0f172a;
+  --baseBgSubtle: #172033;
+  --baseBg: #1f2937;
+  --baseBgHover: #273449;
+  --baseBgActive: #324258;
+  --baseLine: #334155;
+  --baseBorder: #40526b;
+  --baseBorderHover: #94a3b8;
+  --baseSolid: #e5e7eb;
+  --baseSolidHover: #f8fafc;
+  --baseText: #cbd5e1;
+  --baseTextContrast: #f8fafc;
 }
 
 .appHeader {
@@ -15,7 +65,7 @@
 .appHeader h1 {
   margin: 0;
   font-size: 20px;
-  color: #111827;
+  color: var(--app-text);
 }
 
 .headerLeft {
@@ -27,23 +77,72 @@
 .iconBtn {
   width: 30px;
   height: 30px;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #111827;
+  color: var(--app-text);
+}
+
+.actionIcon {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.actionIcon:hover,
+.actionIcon:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--app-border-soft);
+  box-shadow: 0 10px 18px var(--app-shadow);
+}
+
+.actionIcon::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--app-active-bg);
+  color: var(--app-active-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 8px 18px var(--app-shadow);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+  z-index: 30;
+}
+
+.actionIcon:hover::after,
+.actionIcon:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .dangerBtn {
-  color: #b91c1c;
+  color: var(--app-danger);
 }
 
 .dangerBtn:hover {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: var(--app-danger-border);
+  background: var(--app-danger-bg);
 }
 
 .saveBtn {
@@ -67,22 +166,6 @@
   transform: scale(1.08);
 }
 
-.textBtn {
-  height: 30px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 10px;
-  cursor: pointer;
-  color: #111827;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .fileHistory {
   position: relative;
   width: 280px;
@@ -92,12 +175,12 @@
 
 .fileHistoryTrigger {
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 13px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--app-surface);
+  color: var(--app-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -107,12 +190,12 @@
 
 .fileNameEditor {
   width: 100%;
-  border: 1px solid #9ca3af;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 13px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--app-surface);
+  color: var(--app-text);
 }
 
 .fileHistoryTrigger span {
@@ -128,10 +211,10 @@
   right: 0;
   z-index: 20;
   padding: 4px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+  background: var(--app-surface);
+  box-shadow: 0 12px 24px var(--app-shadow);
 }
 
 .fileHistoryMenu button {
@@ -139,7 +222,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #111827;
+  color: var(--app-text);
   padding: 8px;
   text-align: left;
   font-size: 13px;
@@ -151,11 +234,11 @@
 
 .fileHistoryMenu button:hover,
 .fileHistoryMenu button.active {
-  background: #f3f4f6;
+  background: var(--app-surface-muted);
 }
 
 .fileHistoryMenu button:disabled {
-  color: #9ca3af;
+  color: var(--app-muted);
   cursor: default;
 }
 
@@ -165,7 +248,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #4b5563;
+  color: var(--app-muted);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -178,14 +261,14 @@
   min-width: 0;
 }
 
-.fileMeta span + span::before {
+.fileMeta span+span::before {
   content: '';
   display: inline-block;
   width: 1px;
   height: 12px;
   margin-right: 10px;
   vertical-align: -2px;
-  background: #d1d5db;
+  background: var(--app-border);
 }
 
 .fileMetaFolder {
@@ -193,61 +276,52 @@
   text-overflow: ellipsis;
 }
 
-.localeSwitch {
+.segmentedSwitch {
   display: inline-flex;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   overflow: hidden;
 }
 
-.localeSwitch button {
+.segmentedSwitch button {
   border: 0;
-  background: #ffffff;
-  color: #374151;
+  background: var(--app-surface);
+  color: var(--app-control-text);
   padding: 6px 10px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.localeSwitch button.active {
-  background: #111827;
-  color: #ffffff;
+.segmentedSwitch button.active {
+  background: var(--app-active-bg);
+  color: var(--app-active-text);
 }
 
 .modeSwitch {
+  flex: 0 0 auto;
+}
+
+.actionBadgeBtn {
+  overflow: visible;
+}
+
+.iconBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 18px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 999px;
   display: inline-flex;
-  margin-bottom: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-.modeSwitch button {
-  border: 0;
-  background: #ffffff;
-  color: #374151;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.modeSwitch button.active {
-  background: #111827;
-  color: #ffffff;
-}
-
-.downloadBtn {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #111827;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-active-bg);
+  color: var(--app-active-text);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .styleTools {
@@ -256,7 +330,7 @@
   gap: 6px;
   padding-left: 6px;
   margin-left: 2px;
-  border-left: 1px solid #d1d5db;
+  border-left: 1px solid var(--app-border);
 }
 
 .styleToolGroup {
@@ -265,10 +339,10 @@
   align-items: center;
   gap: 4px;
   padding: 0 4px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
-  background: #ffffff;
-  color: #374151;
+  background: var(--app-surface);
+  color: var(--app-control-text);
 }
 
 .colorSwatch {
@@ -292,17 +366,17 @@
 .fontSelect {
   height: 30px;
   max-width: 170px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--app-surface);
+  color: var(--app-text);
   font-size: 12px;
   padding: 0 8px;
 }
 
 .editorWrap {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   min-height: calc(100vh - 96px);
   overflow: hidden;
@@ -314,6 +388,46 @@
   min-height: calc(100vh - 136px);
 }
 
+:root[data-app-theme='dark'] [class*='_toolbarCodeBlockLanguageSelectContent_'],
+:root[data-app-theme='dark'] [class*='_selectContainer_'],
+:root[data-app-theme='dark'] [class*='_toolbarNodeKindSelectContainer_'],
+:root[data-app-theme='dark'] [class*='_toolbarButtonDropdownContainer_'] {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border: 1px solid #40526b !important;
+}
+
+:root[data-app-theme='dark'] [class*='_selectTrigger_'],
+:root[data-app-theme='dark'] [class*='_toolbarCodeBlockLanguageSelectTrigger_'],
+:root[data-app-theme='dark'] [class*='_toolbarNodeKindSelectTrigger_'],
+:root[data-app-theme='dark'] [class*='_toolbarButtonSelectTrigger_'] {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border: 1px solid #40526b !important;
+}
+
+:root[data-app-theme='dark'] [class*='_selectItem_'],
+:root[data-app-theme='dark'] [class*='_toolbarNodeKindSelectItem_'] {
+  color: #f8fafc !important;
+}
+
+:root[data-app-theme='dark'] .mdxeditor-select-content {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border: 1px solid #40526b !important;
+}
+
+:root[data-app-theme='dark'] .mdxeditor-select-content [role='option'] {
+  color: #f8fafc !important;
+  background-color: transparent !important;
+}
+
+:root[data-app-theme='dark'] .mdxeditor-select-content [role='option'][data-highlighted],
+:root[data-app-theme='dark'] .mdxeditor-select-content [role='option'][data-state='checked'],
+:root[data-app-theme='dark'] .mdxeditor-select-content [role='option'][aria-selected='true'] {
+  background-color: #1f2937 !important;
+}
+
 .workspace {
   display: block;
 }
@@ -321,18 +435,18 @@
 .sourceEditor {
   width: 100%;
   min-height: calc(100vh - 140px);
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--app-surface);
+  color: var(--app-text);
   padding: 16px;
   resize: none;
   font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .previewWrap {
-  background: #fff;
-  border: 1px solid #d1d5db;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   overflow: hidden;
   min-height: calc(100vh - 96px);
@@ -345,11 +459,17 @@
 }
 
 .previewHeader {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--app-border-soft);
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--app-control-text);
   padding: 10px 12px;
+}
+
+.previewHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .previewBody {
@@ -366,6 +486,157 @@
   display: block;
 }
 
+.pdfPreviewStaging {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 794px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.pdfPreviewPage {
+  width: 794px;
+  min-height: 1123px;
+  padding: 56px;
+  background: #ffffff;
+  color: #111827;
+  line-height: 1.65;
+  font-size: 15px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
+.pdfPreviewPageVisible {
+  margin: 0 auto;
+}
+
+.pdfPreviewPage h1,
+.pdfPreviewPage h2,
+.pdfPreviewPage h3,
+.pdfPreviewPage h4,
+.pdfPreviewPage h5,
+.pdfPreviewPage h6 {
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.pdfPreviewPage a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.pdfPreviewPage img {
+  max-width: 100%;
+  height: auto;
+}
+
+.pdfPreviewPage blockquote {
+  margin: 0 0 1em;
+  padding-left: 1em;
+  border-left: 4px solid #cbd5e1;
+  color: #334155;
+}
+
+.pdfPreviewPage pre {
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 1em;
+}
+
+.pdfPreviewPage :not(pre)>code {
+  background: #e5e7eb;
+  color: #111827;
+  border-radius: 6px;
+  padding: 0.15em 0.4em;
+}
+
+.pdfPreviewPage table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pdfPreviewPage th,
+.pdfPreviewPage td {
+  border: 1px solid #cbd5e1;
+  padding: 0.55em 0.7em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pdfPreviewPage th {
+  background: #f8fafc;
+}
+
+.pdfPreviewOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.pdfPreviewModal {
+  width: min(100%, 960px);
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  background: var(--app-surface);
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(2, 6, 23, 0.4);
+}
+
+.pdfPreviewModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pdfPreviewHeadingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pdfPreviewFileName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--app-control-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdfPreviewViewport {
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.02)),
+    var(--app-bg);
+}
+
+.screenPreviewViewport {
+  flex: 1;
+}
+
+.pdfViewerFrame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 180px);
+  border: 0;
+  border-radius: 14px;
+  background: #52525b;
+}
+
 .hiddenFileInput {
   display: none;
 }
@@ -375,9 +646,10 @@
   inset: 0;
   z-index: 1000;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(17, 24, 39, 0.38);
+  background: var(--app-overlay);
   backdrop-filter: blur(1px);
 }
 
@@ -388,6 +660,14 @@
   border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+.spinnerLabel {
+  margin-top: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 @keyframes spin {
