@@ -10,7 +10,7 @@ context: |
   Electron main: electron/main.cjs | preload: electron/preload.cjs
   Module system: ESM (type: module), Vite bundler, CommonJS for Electron layer
   Target: Desktop app (Windows NSIS, macOS DMG) via electron-builder
-  Testing: No test framework configured. strict_tdd: false. Recommended: Vitest.
+  Testing: Vitest 4.1.7 with 114 characterization tests over src/App.tsx pure helpers. strict_tdd: true.
 
 rules:
   proposal:
@@ -27,12 +27,10 @@ rules:
     - Group by phase, use hierarchical numbering
     - Keep tasks completable in one session
   apply:
-    follow_patterns: "Follow existing code patterns"
-    tdd: false
-    test_command: ""
-    note: "No test runner installed. Add Vitest before enabling TDD mode."
+    tdd: true
+    test_command: "bun run test"
   verify:
-    test_command: ""
+    test_command: "bun run test"
     build_command: "bun run build"
     lint_command: "bun run lint"
     coverage_threshold: 0
@@ -40,15 +38,12 @@ rules:
     - Warn before merging destructive deltas
 
 testing:
-  strict_tdd: false
-  runner: null
-  reason: "No test framework found in package.json (no vitest, jest, playwright, cypress)"
-  recommended: "vitest — native Vite integration, zero config, compatible with this stack"
+  strict_tdd: true
+  runner: "vitest"
+  reason: "Vitest 4.1.7 installed via change add-test-safety-net; 114 characterization tests cover 17 pure helpers in src/App.tsx"
   layers:
-    unit: false
-    integration: false
-    e2e: false
-  coverage: false
+    unit: true
+  coverage: true
   quality:
     linter: "bun run lint (eslint with typescript-eslint + react-hooks + react-refresh)"
     type_checker: "tsc -b (strict: noUnusedLocals, noUnusedParameters, erasableSyntaxOnly)"
