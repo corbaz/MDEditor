@@ -1,0 +1,55 @@
+schema: spec-driven
+project: mdeditor
+initialized: 2026-05-31
+artifact_store: hybrid
+
+context: |
+  Tech stack: Electron 42 + React 19 + Vite 8 + TypeScript ~6.0 + MDXEditor 4
+  Package manager: bun (bun.lock present)
+  Entry: src/main.tsx -> src/App.tsx (God-component ~2565 lines, refactor candidate)
+  Electron main: electron/main.cjs | preload: electron/preload.cjs
+  Module system: ESM (type: module), Vite bundler, CommonJS for Electron layer
+  Target: Desktop app (Windows NSIS, macOS DMG) via electron-builder
+  Testing: No test framework configured. strict_tdd: false. Recommended: Vitest.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Flag changes that touch the App.tsx God-component
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Flag IPC channel changes (main <-> renderer boundary)
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    follow_patterns: "Follow existing code patterns"
+    tdd: false
+    test_command: ""
+    note: "No test runner installed. Add Vitest before enabling TDD mode."
+  verify:
+    test_command: ""
+    build_command: "bun run build"
+    lint_command: "bun run lint"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: false
+  runner: null
+  reason: "No test framework found in package.json (no vitest, jest, playwright, cypress)"
+  recommended: "vitest — native Vite integration, zero config, compatible with this stack"
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage: false
+  quality:
+    linter: "bun run lint (eslint with typescript-eslint + react-hooks + react-refresh)"
+    type_checker: "tsc -b (strict: noUnusedLocals, noUnusedParameters, erasableSyntaxOnly)"
+    formatter: null
