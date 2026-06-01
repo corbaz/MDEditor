@@ -5,6 +5,15 @@ const path = require('path');
 let sqliteDatabase = null;
 let jsonStorePath = null;
 
+// Test isolation hook (additive, env-gated, no-op in production).
+// Playwright launches the prod build with MDEDITOR_USER_DATA pointing at a
+// fresh temp dir so tests never touch the real profile / SQLite / images.
+// MUST run before app.whenReady() and before any app.getPath('userData') call.
+if (process.env.MDEDITOR_USER_DATA) {
+    app.setPath('userData', process.env.MDEDITOR_USER_DATA);
+}
+
+
 const MIME_BY_EXT = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',

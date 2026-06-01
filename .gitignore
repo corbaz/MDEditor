@@ -12,6 +12,8 @@ dist
 dist-ssr
 release-win
 coverage
+test-results
+playwright-report
 *.local
 
 # Editor directories and files
