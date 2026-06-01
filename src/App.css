@@ -1,3 +1,5 @@
+/* === TOKENS (neumórficos — Change 3b) === */
+
 /* === LAYOUT (Holy Grail) === */
 .app {
   --app-bg: #f3f4f6;
@@ -15,6 +17,38 @@
   --app-danger-bg: #fef2f2;
   --app-danger-border: #fecaca;
   --app-overlay: rgba(17, 24, 39, 0.38);
+
+  /* Geometría neumórfica (compartida entre temas) */
+  --nm-radius: 12px;
+  --nm-distance: 5px;
+  --nm-blur: 12px;
+
+  /* Superficie neumórfica: un peldaño por debajo del fondo plano */
+  --nm-surface: #e8ecf3;
+
+  /* Pareja de sombras (claro): luz arriba-izquierda, sombra abajo-derecha */
+  --nm-shadow-light: rgba(255, 255, 255, 0.75);
+  --nm-shadow-dark: rgba(163, 177, 198, 0.55);
+
+  /* Acento cyan -> purple */
+  --nm-accent-from: #22d3ee;
+  --nm-accent-to: #a78bfa;
+  --nm-accent-gradient: linear-gradient(135deg, var(--nm-accent-from), var(--nm-accent-to));
+  /* Texto sobre el gradiente: slate-950, contraste AA sobre cyan y purple */
+  --nm-accent-text: #0b1020;
+
+  /* Sombras compuestas (derivan de las variables anteriores) */
+  --nm-raised:
+    var(--nm-distance) var(--nm-distance) var(--nm-blur) var(--nm-shadow-dark),
+    calc(var(--nm-distance) * -1) calc(var(--nm-distance) * -1) var(--nm-blur) var(--nm-shadow-light);
+  --nm-inset:
+    inset var(--nm-distance) var(--nm-distance) var(--nm-blur) var(--nm-shadow-dark),
+    inset calc(var(--nm-distance) * -1) calc(var(--nm-distance) * -1) var(--nm-blur) var(--nm-shadow-light);
+  /* Variante hover: relieve amplificado */
+  --nm-raised-hover:
+    calc(var(--nm-distance) + 2px) calc(var(--nm-distance) + 2px) calc(var(--nm-blur) + 4px) var(--nm-shadow-dark),
+    calc((var(--nm-distance) + 2px) * -1) calc((var(--nm-distance) + 2px) * -1) calc(var(--nm-blur) + 4px) var(--nm-shadow-light);
+
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100dvh;
@@ -44,6 +78,12 @@
   --app-danger-bg: #451a1a;
   --app-danger-border: #7f1d1d;
   --app-overlay: rgba(2, 6, 23, 0.62);
+
+  /* Alphas recalibradas: highlight tenue (5%), sombra profunda (55%) */
+  --nm-surface: #1b2230;
+  --nm-shadow-light: rgba(255, 255, 255, 0.05);
+  --nm-shadow-dark: rgba(0, 0, 0, 0.55);
+  --nm-accent-text: #0b1020;
 }
 
 :root[data-app-theme='dark'] {
