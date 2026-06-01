@@ -174,11 +174,20 @@
   transform: translateY(0);
 }
 
-.actionIcon:hover,
-.actionIcon:focus-visible {
+/* Hover SOLO (sin foco): amplifica el relieve, no lo reemplaza */
+.actionIcon:hover {
   transform: translateY(-1px);
-  border-color: var(--app-border-soft);
-  box-shadow: 0 10px 18px var(--app-shadow);
+  box-shadow: var(--nm-raised-hover);
+}
+
+/* Foco accesible: outline independiente del relieve neumórfico */
+.iconBtn:focus-visible,
+.actionIcon:focus-visible,
+.segmentedSwitch button:focus-visible,
+.fileHistoryTrigger:focus-visible,
+.fileNameEditor:focus-visible {
+  outline: 2px solid var(--nm-accent-from);
+  outline-offset: 2px;
 }
 
 .actionIcon::after {
