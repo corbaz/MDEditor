@@ -102,12 +102,30 @@
   --baseTextContrast: #f8fafc;
 }
 
+/* === CHROME (neumórfico — Change 3b) === */
 .appHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 0; /* El gap del grid reemplaza el margin-bottom */
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
+  box-shadow: var(--nm-raised);
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  /* Footer StatusBar: relieve elevado, safe-area iOS */
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  font-size: 12px;
+  color: var(--app-muted);
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
+  box-shadow: var(--nm-raised);
 }
 
 .appHeader h1 {
@@ -125,27 +143,35 @@
 .iconBtn {
   width: 30px;
   height: 30px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
-  border-radius: 6px;
+  border: 0; /* Botón neumórfico: borde eliminado, relieve lo reemplaza */
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--app-text);
+  box-shadow: var(--nm-raised);
 }
 
 .actionIcon {
   position: relative;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--nm-radius);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
     background 160ms ease,
     color 160ms ease,
     box-shadow 160ms ease;
+}
+
+/* Presionado = hundido */
+.iconBtn:active,
+.actionIcon:active {
+  box-shadow: var(--nm-inset);
+  transform: translateY(0);
 }
 
 .actionIcon:hover,
@@ -223,27 +249,29 @@
 
 .fileHistoryTrigger {
   width: 100%;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border: 0; /* Campos tipo input: surco hundido */
+  border-radius: var(--nm-radius);
   padding: 7px 10px;
   font-size: 13px;
-  background: var(--app-surface);
+  background: var(--nm-surface);
   color: var(--app-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
+  box-shadow: var(--nm-inset);
 }
 
 .fileNameEditor {
   width: 100%;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border: 0; /* Campos tipo input: surco hundido */
+  border-radius: var(--nm-radius);
   padding: 7px 10px;
   font-size: 13px;
-  background: var(--app-surface);
+  background: var(--nm-surface);
   color: var(--app-text);
+  box-shadow: var(--nm-inset);
 }
 
 .fileHistoryTrigger span {
@@ -259,10 +287,9 @@
   right: 0;
   z-index: 20;
   padding: 4px;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  background: var(--app-surface);
-  box-shadow: 0 12px 24px var(--app-shadow);
+  border-radius: var(--nm-radius);
+  background: var(--nm-surface);
+  box-shadow: var(--nm-raised);
 }
 
 .fileHistoryMenu button {
@@ -326,24 +353,31 @@
 
 .segmentedSwitch {
   display: inline-flex;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--nm-radius);
+  overflow: visible;
+  background: var(--nm-surface);
+  box-shadow: var(--nm-inset);
 }
 
 .segmentedSwitch button {
   border: 0;
-  background: var(--app-surface);
+  background: transparent;
   color: var(--app-control-text);
-  padding: 6px 10px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
+  border-radius: calc(var(--nm-radius) - 4px);
   cursor: pointer;
 }
 
+/* Activo = chip con gradiente de acento (más legible que el inset) */
 .segmentedSwitch button.active {
-  background: var(--app-active-bg);
-  color: var(--app-active-text);
+  background: var(--nm-accent-gradient);
+  color: var(--nm-accent-text);
+  box-shadow: var(--nm-raised);
 }
 
 .modeSwitch {
@@ -391,6 +425,7 @@
   border-radius: 6px;
   background: var(--app-surface);
   color: var(--app-control-text);
+  box-shadow: var(--nm-inset);
 }
 
 .colorSwatch {
@@ -420,6 +455,7 @@
   color: var(--app-text);
   font-size: 12px;
   padding: 0 8px;
+  box-shadow: var(--nm-inset);
 }
 
 .editorWrap {
