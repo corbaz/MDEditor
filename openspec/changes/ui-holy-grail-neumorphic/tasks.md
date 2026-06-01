@@ -32,42 +32,42 @@ Notes:
 
 **File**: `src/index.css`
 
-- [ ] Replace `min-height: 100%` on the `html, body, #root` rule with `height: 100dvh; overflow: hidden`.
-- [ ] Keep `box-sizing: border-box` and `margin: 0` and `font-family` declarations unchanged.
+- [x] Replace `min-height: 100%` on the `html, body, #root` rule with `height: 100dvh; overflow: hidden`.
+- [x] Keep `box-sizing: border-box` and `margin: 0` and `font-family` declarations unchanged.
 
 ### 1.2 Convert .app to the Holy Grail grid shell (App.css)
 
 **File**: `src/App.css`
 
-- [ ] Add section banner `/* === LAYOUT (Holy Grail) === */` above the `.app` block.
-- [ ] On `.app`: replace `min-height: 100vh` with `display: grid; grid-template-rows: auto 1fr auto; height: 100dvh; overflow: hidden`.
-- [ ] On `.app`: change `padding: 20px` to `padding: 16px`. Add `gap: 12px`.
-- [ ] On `.app`: add iOS safe-area overrides:
+- [x] Add section banner `/* === LAYOUT (Holy Grail) === */` above the `.app` block.
+- [x] On `.app`: replace `min-height: 100vh` with `display: grid; grid-template-rows: auto 1fr auto; height: 100dvh; overflow: hidden`.
+- [x] On `.app`: change `padding: 20px` to `padding: 16px`. Add `gap: 12px`.
+- [x] On `.app`: add iOS safe-area overrides:
   ```
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   ```
   Spanish comment: `/* Respeta notch/home-indicator en iOS */`
-- [ ] On `.appHeader`: set `margin-bottom: 0` (gap covers spacing now). Spanish comment: `/* El gap del grid reemplaza el margin-bottom */`
-- [ ] On `.workspace`: add `min-height: 0; overflow: auto`. Spanish comment: `/* ÚNICO contenedor scrolleable — min-height:0 obligatorio en grid */`
+- [x] On `.appHeader`: set `margin-bottom: 0` (gap covers spacing now). Spanish comment: `/* El gap del grid reemplaza el margin-bottom */`
+- [x] On `.workspace`: add `min-height: 0; overflow: auto`. Spanish comment: `/* ÚNICO contenedor scrolleable — min-height:0 obligatorio en grid */`
 
 ### 1.3 Delete calc(100vh-Npx) magic numbers — fill chain (App.css)
 
 **File**: `src/App.css`
 
-- [ ] `.editorWrap` (line ~381): replace `min-height: calc(100vh - 96px); flex: 1` with `height: 100%`. Keep all other rules (`background`, `border`, `border-radius`, `overflow`). Spanish comment: `/* height:100% funciona porque .workspace tiene altura resuelta por el grid */`
-- [ ] `.editor` (line ~388): replace `min-height: calc(100vh - 136px)` with `height: 100%`. Keep `padding: 16px`.
-- [ ] `.sourceEditor` (line ~437): replace `min-height: calc(100vh - 140px)` with `height: 100%`. Keep all other rules.
-- [ ] `.previewWrap` (line ~452): replace `min-height: calc(100vh - 96px)` with `height: 100%`. Keep all other rules.
-- [ ] `.fullPreview` (line ~458): remove `min-height: calc(100vh - 140px)` entirely (rule can remain empty or be dropped). Spanish comment: `/* min-height eliminado — el grid + height:100% de .previewWrap gobiernan */`
-- [ ] Verify: search App.css for `calc(100vh` — should return zero matches in the shell/editor rules. The three PDF overlay occurrences (`pdfPreviewModal`, `pdfPreviewViewport`, PDF iframe) are position:fixed overlays (REQ-LAYOUT-09) and must remain untouched.
+- [x] `.editorWrap` (line ~381): replace `min-height: calc(100vh - 96px); flex: 1` with `height: 100%`. Keep all other rules (`background`, `border`, `border-radius`, `overflow`). Spanish comment: `/* height:100% funciona porque .workspace tiene altura resuelta por el grid */`
+- [x] `.editor` (line ~388): replace `min-height: calc(100vh - 136px)` with `height: 100%`. Keep `padding: 16px`.
+- [x] `.sourceEditor` (line ~437): replace `min-height: calc(100vh - 140px)` with `height: 100%`. Keep all other rules.
+- [x] `.previewWrap` (line ~452): replace `min-height: calc(100vh - 96px)` with `height: 100%`. Keep all other rules.
+- [x] `.fullPreview` (line ~458): remove `min-height: calc(100vh - 140px)` entirely (rule can remain empty or be dropped). Spanish comment: `/* min-height eliminado — el grid + height:100% de .previewWrap gobiernan */`
+- [x] Verify: search App.css for `calc(100vh` — should return zero matches in the shell/editor rules. The three PDF overlay occurrences (`pdfPreviewModal`, `pdfPreviewViewport`, PDF iframe) are position:fixed overlays (REQ-LAYOUT-09) and must remain untouched.
 
 ### 1.4 Verify and commit Phase 1
 
-- [ ] Run `bun run test` — must report 114 passed, 0 failed.
-- [ ] Run `bun run test:e2e` — must report 7 passed, 0 failed. (E2E exercises view-mode switching and the workspace region.)
-- [ ] Visual sanity: start the dev server; confirm editor fills the main row in editor/source/preview modes; confirm header/footer do not scroll.
-- [ ] Commit:
+- [x] Run `bun run test` — must report 114 passed, 0 failed.
+- [x] Run `bun run test:e2e` — must report 7 passed, 0 failed. (E2E exercises view-mode switching and the workspace region.)
+- [x] Visual sanity: start the dev server; confirm editor fills the main row in editor/source/preview modes; confirm header/footer do not scroll.
+- [x] Commit:
   ```
   refactor(ui): convert app shell to Holy Grail grid layout
   ```
@@ -82,14 +82,14 @@ Notes:
 
 **File**: `src/App.tsx`
 
-- [ ] Delete lines 1648–1653: the `<div className="fileMeta" title={...}>…</div>` block from inside `<header>`.
-- [ ] Leave all other header children untouched: `<div className="headerLeft">`, theme/locale/mode `segmentedSwitch` groups, all 8 `data-testid` hooks, all 3 `role="group"` / `aria-label` attributes.
+- [x] Delete lines 1648–1653: the `<div className="fileMeta" title={...}>…</div>` block from inside `<header>`.
+- [x] Leave all other header children untouched: `<div className="headerLeft">`, theme/locale/mode `segmentedSwitch` groups, all 8 `data-testid` hooks, all 3 `role="group"` / `aria-label` attributes.
 
 ### 2.2 Add `<footer>` StatusBar after `</section>` (App.tsx)
 
 **File**: `src/App.tsx`
 
-- [ ] After the closing `</section>` tag at line 2000, insert the footer element:
+- [x] After the closing `</section>` tag at line 2000, insert the footer element:
   ```tsx
   <footer className="app-footer" data-testid="app-footer-status">
       <div className="fileMeta" title={folderPath || visibleFolder}>
@@ -100,22 +100,22 @@ Notes:
       </div>
   </footer>
   ```
-- [ ] `data-testid="app-footer-status"` is a NEW additive hook — does not affect any existing testid contract.
-- [ ] Confirm the existing `pdfPreviewStaging` div (currently line 2002) remains immediately after the new footer — it is a `position:fixed` overlay, unchanged.
+- [x] `data-testid="app-footer-status"` is a NEW additive hook — does not affect any existing testid contract.
+- [x] Confirm the existing `pdfPreviewStaging` div (currently line 2002) remains immediately after the new footer — it is a `position:fixed` overlay, unchanged.
 
 ### 2.3 Clean up orphaned media-query fileMeta rule (App.css)
 
 **File**: `src/App.css`
 
-- [ ] Find the `@media (max-width: 1080px)` rule that sets `.fileMeta { order: 4; flex-basis: 100% }` in the header context. Remove or scope it to `.app-footer .fileMeta` — it becomes a no-op for the header and is harmless but cleaner to remove.
+- [x] Find the `@media (max-width: 1080px)` rule that sets `.fileMeta { order: 4; flex-basis: 100% }` in the header context. Remove or scope it to `.app-footer .fileMeta` — it becomes a no-op for the header and is harmless but cleaner to remove.
 
 ### 2.4 Verify and commit Phase 2
 
-- [ ] Run `bun run test` — 114 green.
-- [ ] Run `bun run test:e2e` — 7 green.
-- [ ] Visual sanity: footer shows folder · size · saved-at; header does NOT show fileMeta.
-- [ ] Confirm `data-testid="app-root"`, `"app-header"`, `"workspace"` are still on their correct elements.
-- [ ] Commit:
+- [x] Run `bun run test` — 114 green.
+- [x] Run `bun run test:e2e` — 7 green.
+- [x] Visual sanity: footer shows folder · size · saved-at; header does NOT show fileMeta.
+- [x] Confirm `data-testid="app-root"`, `"app-header"`, `"workspace"` are still on their correct elements.
+- [x] Commit:
   ```
   feat(ui): add StatusBar footer with file metadata
   ```
@@ -130,8 +130,8 @@ Notes:
 
 **File**: `src/App.css`
 
-- [ ] Add section banner `/* === TOKENS (neumórficos — Change 3b) === */` at the very top of App.css, above the existing `.app {` block.
-- [ ] Inside the existing `.app { … }` block, append the full neumorphic token set (verbatim from design §2):
+- [x] Add section banner `/* === TOKENS (neumórficos — Change 3b) === */` at the very top of App.css, above the existing `.app {` block.
+- [x] Inside the existing `.app { … }` block, append the full neumorphic token set (verbatim from design §2):
   - Geometry: `--nm-radius`, `--nm-distance`, `--nm-blur`
   - Surface: `--nm-surface: #e8ecf3`
   - Shadow pair: `--nm-shadow-light: rgba(255,255,255,0.75)`, `--nm-shadow-dark: rgba(163,177,198,0.55)`
@@ -143,7 +143,7 @@ Notes:
 
 **File**: `src/App.css`
 
-- [ ] Inside the existing `.app.dark-theme { … }` block, append the dark token overrides:
+- [x] Inside the existing `.app.dark-theme { … }` block, append the dark token overrides:
   - `--nm-surface: #1b2230`
   - `--nm-shadow-light: rgba(255,255,255,0.05)`
   - `--nm-shadow-dark: rgba(0,0,0,0.55)`
@@ -152,9 +152,9 @@ Notes:
 
 ### 3.3 Verify and commit Phase 3
 
-- [ ] Run `bun run test` — 114 green (no visual change expected yet, tokens are defined but not applied).
-- [ ] Run `bun run test:e2e` — 7 green.
-- [ ] Commit:
+- [x] Run `bun run test` — 114 green (no visual change expected yet, tokens are defined but not applied).
+- [x] Run `bun run test:e2e` — 7 green.
+- [x] Commit:
   ```
   feat(ui): add neumorphic CSS design tokens (light + dark)
   ```
@@ -167,54 +167,54 @@ Notes:
 
 ### 4.1 Add chrome section banner (App.css)
 
-- [ ] Add section banner `/* === CHROME (neumórfico — Change 3b) === */` above the `.appHeader` block.
+- [x] Add section banner `/* === CHROME (neumórfico — Change 3b) === */` above the `.appHeader` block.
 
 ### 4.2 Style header and footer as raised surfaces (App.css)
 
 **File**: `src/App.css`
 
-- [ ] `.appHeader`: add `background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised);`. Remove any existing `border-bottom` if present.
-- [ ] `.app-footer`: add `background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised); padding: 8px 14px; font-size: 12px; color: var(--app-muted); display: flex; align-items: center; gap: 10px; padding-bottom: max(8px, env(safe-area-inset-bottom));`.
+- [x] `.appHeader`: add `background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised);`. Remove any existing `border-bottom` if present.
+- [x] `.app-footer`: add `background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised); padding: 8px 14px; font-size: 12px; color: var(--app-muted); display: flex; align-items: center; gap: 10px; padding-bottom: max(8px, env(safe-area-inset-bottom));`.
   - Spanish comment: `/* Footer StatusBar: relieve elevado, safe-area iOS */`
 
 ### 4.3 Style iconBtn and actionIcon as raised buttons (App.css)
 
 **File**: `src/App.css`
 
-- [ ] `.iconBtn`: set `border: 0; background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised);`. Keep `width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--app-text)`. Spanish comment: `/* Botón neumórfico: borde eliminado, relieve lo reemplaza */`
-- [ ] `.actionIcon`: set `border-radius: var(--nm-radius);`. Keep all other existing properties (`position:relative; width:34px; height:34px; transition:…`).
-- [ ] `.iconBtn:active, .actionIcon:active`: add `box-shadow: var(--nm-inset); transform: translateY(0);`. Spanish comment: `/* Presionado = hundido */`
+- [x] `.iconBtn`: set `border: 0; background: var(--nm-surface); border-radius: var(--nm-radius); box-shadow: var(--nm-raised);`. Keep `width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--app-text)`. Spanish comment: `/* Botón neumórfico: borde eliminado, relieve lo reemplaza */`
+- [x] `.actionIcon`: set `border-radius: var(--nm-radius);`. Keep all other existing properties (`position:relative; width:34px; height:34px; transition:…`).
+- [x] `.iconBtn:active, .actionIcon:active`: add `box-shadow: var(--nm-inset); transform: translateY(0);`. Spanish comment: `/* Presionado = hundido */`
 
 ### 4.4 Style segmentedSwitch as recessed track with raised active chip (App.css)
 
 **File**: `src/App.css`
 
-- [ ] `.segmentedSwitch` track: set `background: var(--nm-surface); box-shadow: var(--nm-inset); border: 0; border-radius: var(--nm-radius);`. Keep `display:inline-flex; gap:4px; padding:4px; overflow:visible`.
-- [ ] `.segmentedSwitch button` (inactive): set `border: 0; background: transparent; color: var(--app-control-text); padding: 6px 12px; font-size:12px; font-weight:600; border-radius: calc(var(--nm-radius) - 4px); cursor:pointer`.
-- [ ] `.segmentedSwitch button.active`: set `background: var(--nm-accent-gradient); color: var(--nm-accent-text); box-shadow: var(--nm-raised);`. Spanish comment: `/* Activo = chip con gradiente de acento (más legible que el inset) */`
+- [x] `.segmentedSwitch` track: set `background: var(--nm-surface); box-shadow: var(--nm-inset); border: 0; border-radius: var(--nm-radius);`. Keep `display:inline-flex; gap:4px; padding:4px; overflow:visible`.
+- [x] `.segmentedSwitch button` (inactive): set `border: 0; background: transparent; color: var(--app-control-text); padding: 6px 12px; font-size:12px; font-weight:600; border-radius: calc(var(--nm-radius) - 4px); cursor:pointer`.
+- [x] `.segmentedSwitch button.active`: set `background: var(--nm-accent-gradient); color: var(--nm-accent-text); box-shadow: var(--nm-raised);`. Spanish comment: `/* Activo = chip con gradiente de acento (más legible que el inset) */`
 
 ### 4.5 Style file-history trigger, menu and inputs as recessed (App.css)
 
 **File**: `src/App.css`
 
-- [ ] `.fileHistoryTrigger, .fileNameEditor`: add `box-shadow: var(--nm-inset); background: var(--nm-surface); border-radius: var(--nm-radius); border: 0;`. Spanish comment: `/* Campos tipo input: surco hundido */`
-- [ ] `.fileHistoryMenu`: add `background: var(--nm-surface); box-shadow: var(--nm-raised); border-radius: var(--nm-radius);`. Keep any existing `position`, `z-index`, `overflow` rules.
+- [x] `.fileHistoryTrigger, .fileNameEditor`: add `box-shadow: var(--nm-inset); background: var(--nm-surface); border-radius: var(--nm-radius); border: 0;`. Spanish comment: `/* Campos tipo input: surco hundido */`
+- [x] `.fileHistoryMenu`: add `background: var(--nm-surface); box-shadow: var(--nm-raised); border-radius: var(--nm-radius);`. Keep any existing `position`, `z-index`, `overflow` rules.
 
 ### 4.6 Optional — styleToolGroup / fontSelect subtle inset (App.css)
 
-- [ ] `.styleToolGroup, .fontSelect`: add `box-shadow: var(--nm-inset);` at reduced opacity (or leave as-is if it looks noisy during visual review). Mark as optional polish.
+- [x] `.styleToolGroup, .fontSelect`: add `box-shadow: var(--nm-inset);` at reduced opacity (or leave as-is if it looks noisy during visual review). Mark as optional polish.
 
 ### 4.7 Confirm MDXEditor internals are untouched
 
-- [ ] Search App.css for `.editor`, `.mdxeditor`, `[class*='_toolbar']` — confirm none of these have neumorphic `box-shadow`, `--nm-surface` background, or `border-radius` from the new tokens.
-- [ ] `.previewBody`, `.pdfPreview*`, `.loadingOverlay`, `.spinner` — confirm unchanged.
+- [x] Search App.css for `.editor`, `.mdxeditor`, `[class*='_toolbar']` — confirm none of these have neumorphic `box-shadow`, `--nm-surface` background, or `border-radius` from the new tokens.
+- [x] `.previewBody`, `.pdfPreview*`, `.loadingOverlay`, `.spinner` — confirm unchanged.
 
 ### 4.8 Verify and commit Phase 4
 
-- [ ] Run `bun run test` — 114 green.
-- [ ] Run `bun run test:e2e` — 7 green.
-- [ ] Visual sanity: toggle light/dark — chrome shows neumorphic relief in both; editor content area remains clean; active segmented chip shows gradient.
-- [ ] Commit:
+- [x] Run `bun run test` — 114 green.
+- [x] Run `bun run test:e2e` — 7 green.
+- [x] Visual sanity: toggle light/dark — chrome shows neumorphic relief in both; editor content area remains clean; active segmented chip shows gradient.
+- [x] Commit:
   ```
   style(ui): apply neumorphic relief to app chrome
   ```
@@ -229,7 +229,7 @@ Notes:
 
 **File**: `src/App.css`
 
-- [ ] Locate the current combined rule at App.css ~line 103–108:
+- [x] Locate the current combined rule at App.css ~line 103–108:
   ```css
   .actionIcon:hover,
   .actionIcon:focus-visible {
@@ -238,7 +238,7 @@ Notes:
     box-shadow: 0 10px 18px var(--app-shadow);
   }
   ```
-- [ ] Split it into two separate rules:
+- [x] Split it into two separate rules:
   - **Hover only** (`.actionIcon:hover`): `transform: translateY(-1px); box-shadow: var(--nm-raised-hover);` — amplifies relief, does NOT replace it.
   - **Focus-visible group** (new block for all interactive chrome elements):
     ```css
@@ -252,15 +252,15 @@ Notes:
     }
     ```
     Spanish comment: `/* Foco accesible: outline independiente del relieve neumórfico */`
-- [ ] Remove `border-color: var(--app-border-soft)` from the hover rule (border removed from neumorphic buttons; rule is now a no-op but cleaner to drop).
-- [ ] Confirm `.actionIcon::after` tooltip rule at lines ~133–137 is untouched.
+- [x] Remove `border-color: var(--app-border-soft)` from the hover rule (border removed from neumorphic buttons; rule is now a no-op but cleaner to drop).
+- [x] Confirm `.actionIcon::after` tooltip rule at lines ~133–137 is untouched.
 
 ### 5.2 Verify and commit Phase 5
 
-- [ ] Run `bun run test` — 114 green.
-- [ ] Run `bun run test:e2e` — 7 green.
-- [ ] Visual sanity: Tab through chrome controls — each shows a 2px cyan outline; neumorphic relief is not clobbered.
-- [ ] Commit:
+- [x] Run `bun run test` — 114 green.
+- [x] Run `bun run test:e2e` — 7 green.
+- [x] Visual sanity: Tab through chrome controls — each shows a 2px cyan outline; neumorphic relief is not clobbered.
+- [x] Commit:
   ```
   fix(ui): accessible focus outline + amplified hover shadow merge
   ```
@@ -273,25 +273,25 @@ Notes:
 
 ### 6.1 Full test and build sweep
 
-- [ ] `bun run test` — 114 passed.
-- [ ] `bun run test:e2e` — 7 passed.
-- [ ] `bun run build` — exit 0, zero errors.
-- [ ] `bun run lint` — zero errors (or identical to pre-change baseline).
-- [ ] Search App.css for `calc(100vh` — must match ONLY the three PDF overlay rules (exempt), zero shell/editor matches.
+- [x] `bun run test` — 114 passed.
+- [x] `bun run test:e2e` — 7 passed.
+- [x] `bun run build` — exit 0, zero errors.
+- [x] `bun run lint` — zero errors (or identical to pre-change baseline).
+- [x] Search App.css for `calc(100vh` — must match ONLY the three PDF overlay rules (exempt), zero shell/editor matches.
 
 ### 6.2 Spec compliance checklist
 
-- [ ] `grid-template-rows: auto 1fr auto` present on `.app` in App.css.
-- [ ] `height: 100dvh` on `.app`, `html, body, #root`.
-- [ ] No `min-height: 100vh` on `.app`.
-- [ ] `overflow: auto; min-height: 0` on `.workspace`.
-- [ ] Zero `calc(100vh - Npx)` in `.editorWrap`, `.editor`, `.sourceEditor`, `.previewWrap`, `.fullPreview`.
-- [ ] All 8 `data-testid` hooks present in rendered JSX (grep App.tsx).
-- [ ] All 3 `role="group"` + `aria-label` groups present in App.tsx.
-- [ ] `<footer className="app-footer">` exists in App.tsx after `</section>`.
-- [ ] fileMeta block NOT present inside `<header>` in App.tsx.
-- [ ] All 8 neumorphic tokens present on `.app` and `.app.dark-theme`.
-- [ ] `.editor` and MDXEditor internals have no `--nm-*` rules.
+- [x] `grid-template-rows: auto 1fr auto` present on `.app` in App.css.
+- [x] `height: 100dvh` on `.app`, `html, body, #root`.
+- [x] No `min-height: 100vh` on `.app`.
+- [x] `overflow: auto; min-height: 0` on `.workspace`.
+- [x] Zero `calc(100vh - Npx)` in `.editorWrap`, `.editor`, `.sourceEditor`, `.previewWrap`, `.fullPreview`.
+- [x] All 8 `data-testid` hooks present in rendered JSX (grep App.tsx).
+- [x] All 3 `role="group"` + `aria-label` groups present in App.tsx.
+- [x] `<footer className="app-footer">` exists in App.tsx after `</section>`.
+- [x] fileMeta block NOT present inside `<header>` in App.tsx.
+- [x] All 8 neumorphic tokens present on `.app` and `.app.dark-theme`.
+- [x] `.editor` and MDXEditor internals have no `--nm-*` rules.
 
 ### 6.3 No additional commit
 
