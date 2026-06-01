@@ -6,7 +6,7 @@ import {
     mergeStyle,
     getStyledMarkdown,
     replaceSelectedTextInMarkdown,
-} from '../App';
+} from '../lib/inline-style';
 
 // Characterization tests — pin ACTUAL current output.
 // These tests describe what the function does today, not what it "should" do.
