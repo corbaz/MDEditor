@@ -1,3 +1,6 @@
+/* === TOKENS (neumórficos — Change 3b) === */
+
+/* === LAYOUT (Holy Grail) === */
 .app {
   --app-bg: #f3f4f6;
   --app-surface: #ffffff;
@@ -14,8 +17,47 @@
   --app-danger-bg: #fef2f2;
   --app-danger-border: #fecaca;
   --app-overlay: rgba(17, 24, 39, 0.38);
-  min-height: 100vh;
-  padding: 20px;
+
+  /* Geometría neumórfica (compartida entre temas) */
+  --nm-radius: 12px;
+  --nm-distance: 5px;
+  --nm-blur: 12px;
+
+  /* Superficie neumórfica: un peldaño por debajo del fondo plano */
+  --nm-surface: #e8ecf3;
+
+  /* Pareja de sombras (claro): luz arriba-izquierda, sombra abajo-derecha */
+  --nm-shadow-light: rgba(255, 255, 255, 0.75);
+  --nm-shadow-dark: rgba(163, 177, 198, 0.55);
+
+  /* Acento cyan -> purple */
+  --nm-accent-from: #22d3ee;
+  --nm-accent-to: #a78bfa;
+  --nm-accent-gradient: linear-gradient(135deg, var(--nm-accent-from), var(--nm-accent-to));
+  /* Texto sobre el gradiente: slate-950, contraste AA sobre cyan y purple */
+  --nm-accent-text: #0b1020;
+
+  /* Sombras compuestas (derivan de las variables anteriores) */
+  --nm-raised:
+    var(--nm-distance) var(--nm-distance) var(--nm-blur) var(--nm-shadow-dark),
+    calc(var(--nm-distance) * -1) calc(var(--nm-distance) * -1) var(--nm-blur) var(--nm-shadow-light);
+  --nm-inset:
+    inset var(--nm-distance) var(--nm-distance) var(--nm-blur) var(--nm-shadow-dark),
+    inset calc(var(--nm-distance) * -1) calc(var(--nm-distance) * -1) var(--nm-blur) var(--nm-shadow-light);
+  /* Variante hover: relieve amplificado */
+  --nm-raised-hover:
+    calc(var(--nm-distance) + 2px) calc(var(--nm-distance) + 2px) calc(var(--nm-blur) + 4px) var(--nm-shadow-dark),
+    calc((var(--nm-distance) + 2px) * -1) calc((var(--nm-distance) + 2px) * -1) calc(var(--nm-blur) + 4px) var(--nm-shadow-light);
+
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 16px;
+  gap: 12px;
+  /* Respeta notch/home-indicator en iOS */
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: var(--app-bg);
   color: var(--app-text);
 }
@@ -36,6 +78,12 @@
   --app-danger-bg: #451a1a;
   --app-danger-border: #7f1d1d;
   --app-overlay: rgba(2, 6, 23, 0.62);
+
+  /* Alphas recalibradas: highlight tenue (5%), sombra profunda (55%) */
+  --nm-surface: #1b2230;
+  --nm-shadow-light: rgba(255, 255, 255, 0.05);
+  --nm-shadow-dark: rgba(0, 0, 0, 0.55);
+  --nm-accent-text: #0b1020;
 }
 
 :root[data-app-theme='dark'] {
@@ -54,12 +102,30 @@
   --baseTextContrast: #f8fafc;
 }
 
+/* === CHROME (neumórfico — Change 3b) === */
 .appHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0; /* El gap del grid reemplaza el margin-bottom */
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
+  box-shadow: var(--nm-raised);
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  /* Footer StatusBar: relieve elevado, safe-area iOS */
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  font-size: 12px;
+  color: var(--app-muted);
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
+  box-shadow: var(--nm-raised);
 }
 
 .appHeader h1 {
@@ -77,21 +143,22 @@
 .iconBtn {
   width: 30px;
   height: 30px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
-  border-radius: 6px;
+  border: 0; /* Botón neumórfico: borde eliminado, relieve lo reemplaza */
+  background: var(--nm-surface);
+  border-radius: var(--nm-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--app-text);
+  box-shadow: var(--nm-raised);
 }
 
 .actionIcon {
   position: relative;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--nm-radius);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -100,11 +167,27 @@
     box-shadow 160ms ease;
 }
 
-.actionIcon:hover,
-.actionIcon:focus-visible {
+/* Presionado = hundido */
+.iconBtn:active,
+.actionIcon:active {
+  box-shadow: var(--nm-inset);
+  transform: translateY(0);
+}
+
+/* Hover SOLO (sin foco): amplifica el relieve, no lo reemplaza */
+.actionIcon:hover {
   transform: translateY(-1px);
-  border-color: var(--app-border-soft);
-  box-shadow: 0 10px 18px var(--app-shadow);
+  box-shadow: var(--nm-raised-hover);
+}
+
+/* Foco accesible: outline independiente del relieve neumórfico */
+.iconBtn:focus-visible,
+.actionIcon:focus-visible,
+.segmentedSwitch button:focus-visible,
+.fileHistoryTrigger:focus-visible,
+.fileNameEditor:focus-visible {
+  outline: 2px solid var(--nm-accent-from);
+  outline-offset: 2px;
 }
 
 .actionIcon::after {
@@ -175,27 +258,29 @@
 
 .fileHistoryTrigger {
   width: 100%;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border: 0; /* Campos tipo input: surco hundido */
+  border-radius: var(--nm-radius);
   padding: 7px 10px;
   font-size: 13px;
-  background: var(--app-surface);
+  background: var(--nm-surface);
   color: var(--app-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
+  box-shadow: var(--nm-inset);
 }
 
 .fileNameEditor {
   width: 100%;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border: 0; /* Campos tipo input: surco hundido */
+  border-radius: var(--nm-radius);
   padding: 7px 10px;
   font-size: 13px;
-  background: var(--app-surface);
+  background: var(--nm-surface);
   color: var(--app-text);
+  box-shadow: var(--nm-inset);
 }
 
 .fileHistoryTrigger span {
@@ -211,10 +296,9 @@
   right: 0;
   z-index: 20;
   padding: 4px;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  background: var(--app-surface);
-  box-shadow: 0 12px 24px var(--app-shadow);
+  border-radius: var(--nm-radius);
+  background: var(--nm-surface);
+  box-shadow: var(--nm-raised);
 }
 
 .fileHistoryMenu button {
@@ -278,24 +362,31 @@
 
 .segmentedSwitch {
   display: inline-flex;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--nm-radius);
+  overflow: visible;
+  background: var(--nm-surface);
+  box-shadow: var(--nm-inset);
 }
 
 .segmentedSwitch button {
   border: 0;
-  background: var(--app-surface);
+  background: transparent;
   color: var(--app-control-text);
-  padding: 6px 10px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
+  border-radius: calc(var(--nm-radius) - 4px);
   cursor: pointer;
 }
 
+/* Activo = chip con gradiente de acento (más legible que el inset) */
 .segmentedSwitch button.active {
-  background: var(--app-active-bg);
-  color: var(--app-active-text);
+  background: var(--nm-accent-gradient);
+  color: var(--nm-accent-text);
+  box-shadow: var(--nm-raised);
 }
 
 .modeSwitch {
@@ -343,6 +434,7 @@
   border-radius: 6px;
   background: var(--app-surface);
   color: var(--app-control-text);
+  box-shadow: var(--nm-inset);
 }
 
 .colorSwatch {
@@ -372,20 +464,21 @@
   color: var(--app-text);
   font-size: 12px;
   padding: 0 8px;
+  box-shadow: var(--nm-inset);
 }
 
 .editorWrap {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  min-height: calc(100vh - 96px);
+  /* height:100% funciona porque .workspace tiene altura resuelta por el grid */
+  height: 100%;
   overflow: hidden;
-  flex: 1;
 }
 
 .editor {
   padding: 16px;
-  min-height: calc(100vh - 136px);
+  height: 100%;
 }
 
 :root[data-app-theme='dark'] [class*='_toolbarCodeBlockLanguageSelectContent_'],
@@ -430,11 +523,13 @@
 
 .workspace {
   display: block;
+  min-height: 0; /* ÚNICO contenedor scrolleable — min-height:0 obligatorio en grid */
+  overflow: auto;
 }
 
 .sourceEditor {
   width: 100%;
-  min-height: calc(100vh - 140px);
+  height: 100%;
   border: 1px solid var(--app-border);
   border-radius: 8px;
   background: var(--app-surface);
@@ -449,13 +544,13 @@
   border: 1px solid var(--app-border);
   border-radius: 8px;
   overflow: hidden;
-  min-height: calc(100vh - 96px);
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .fullPreview {
-  min-height: calc(100vh - 140px);
+  /* min-height eliminado — el grid + height:100% de .previewWrap gobiernan */
 }
 
 .previewHeader {
@@ -679,11 +774,6 @@
 @media (max-width: 1080px) {
   .appHeader {
     flex-wrap: wrap;
-  }
-
-  .fileMeta {
-    order: 4;
-    flex-basis: 100%;
   }
 
   .workspace {

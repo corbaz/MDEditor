@@ -1645,12 +1645,6 @@ function App() {
                         </div>
                     )}
                 </div>
-                <div className="fileMeta" title={folderPath || visibleFolder}>
-                    <Folder size={13} />
-                    <span className="fileMetaFolder">{visibleFolder}</span>
-                    <span>{formatFileSize(currentSizeBytes)}</span>
-                    <span>{formatSavedAt(lastSavedAt, locale)}</span>
-                </div>
                 <div
                     className="themeSwitch segmentedSwitch"
                     role="group"
@@ -1998,6 +1992,15 @@ function App() {
                     </aside>
                 )}
             </section>
+
+            <footer className="app-footer" data-testid="app-footer-status">
+                <div className="fileMeta" title={folderPath || visibleFolder}>
+                    <Folder size={13} />
+                    <span className="fileMetaFolder">{visibleFolder}</span>
+                    <span>{formatFileSize(currentSizeBytes)}</span>
+                    <span>{formatSavedAt(lastSavedAt, locale)}</span>
+                </div>
+            </footer>
 
             <div className="pdfPreviewStaging" aria-hidden="true">
                 <div ref={previewExportRef} className="pdfPreviewPage">
