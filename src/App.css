@@ -1,3 +1,4 @@
+/* === LAYOUT (Holy Grail) === */
 .app {
   --app-bg: #f3f4f6;
   --app-surface: #ffffff;
@@ -14,8 +15,15 @@
   --app-danger-bg: #fef2f2;
   --app-danger-border: #fecaca;
   --app-overlay: rgba(17, 24, 39, 0.38);
-  min-height: 100vh;
-  padding: 20px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 16px;
+  gap: 12px;
+  /* Respeta notch/home-indicator en iOS */
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: var(--app-bg);
   color: var(--app-text);
 }
@@ -59,7 +67,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0; /* El gap del grid reemplaza el margin-bottom */
 }
 
 .appHeader h1 {
@@ -378,14 +386,14 @@
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  min-height: calc(100vh - 96px);
+  /* height:100% funciona porque .workspace tiene altura resuelta por el grid */
+  height: 100%;
   overflow: hidden;
-  flex: 1;
 }
 
 .editor {
   padding: 16px;
-  min-height: calc(100vh - 136px);
+  height: 100%;
 }
 
 :root[data-app-theme='dark'] [class*='_toolbarCodeBlockLanguageSelectContent_'],
@@ -430,11 +438,13 @@
 
 .workspace {
   display: block;
+  min-height: 0; /* ÚNICO contenedor scrolleable — min-height:0 obligatorio en grid */
+  overflow: auto;
 }
 
 .sourceEditor {
   width: 100%;
-  min-height: calc(100vh - 140px);
+  height: 100%;
   border: 1px solid var(--app-border);
   border-radius: 8px;
   background: var(--app-surface);
@@ -449,13 +459,13 @@
   border: 1px solid var(--app-border);
   border-radius: 8px;
   overflow: hidden;
-  min-height: calc(100vh - 96px);
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .fullPreview {
-  min-height: calc(100vh - 140px);
+  /* min-height eliminado — el grid + height:100% de .previewWrap gobiernan */
 }
 
 .previewHeader {
