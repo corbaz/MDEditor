@@ -13,6 +13,7 @@ if (process.env.MDEDITOR_USER_DATA) {
     app.setPath('userData', process.env.MDEDITOR_USER_DATA);
 }
 
+
 const MIME_BY_EXT = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
