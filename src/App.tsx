@@ -1480,8 +1480,9 @@ function App() {
     return (
         <main
             className={`app ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}
+            data-testid="app-root"
         >
-            <header className="appHeader">
+            <header className="appHeader" data-testid="app-header">
                 <div className="headerLeft">
                     <h1>MD Editor</h1>
                     <button
@@ -1490,6 +1491,7 @@ function App() {
                         onClick={() => void createNewDocument()}
                         aria-label={actionLabels.create}
                         data-label={actionLabels.create}
+                        data-testid="btn-new"
                     >
                         <FilePlus size={16} />
                     </button>
@@ -1508,6 +1510,7 @@ function App() {
                         onClick={saveToDevice}
                         aria-label={actionLabels.save}
                         data-label={actionLabels.save}
+                        data-testid="btn-save"
                     >
                         <Save size={16} />
                     </button>
@@ -1717,9 +1720,9 @@ function App() {
                 </div>
             </header>
 
-            <section className="workspace">
+            <section className="workspace" data-testid="workspace">
                 {viewMode === 'editor' && (
-                    <div className="editorWrap">
+                    <div className="editorWrap" data-testid="editor-wrap">
                         <MDXEditor
                             key={editorDocumentKey}
                             ref={editorRef}
@@ -1960,11 +1963,12 @@ function App() {
                         value={getReadableMarkdown(markdown)}
                         spellCheck={false}
                         readOnly
+                        data-testid="source-editor"
                     />
                 )}
 
                 {viewMode === 'preview' && (
-                    <aside className="previewWrap fullPreview">
+                    <aside className="previewWrap fullPreview" data-testid="preview-wrap">
                         <div className="previewHeader previewHeaderRow">
                             <span>Preview</span>
                             <button
