@@ -691,11 +691,6 @@
     flex-wrap: wrap;
   }
 
-  .fileMeta {
-    order: 4;
-    flex-basis: 100%;
-  }
-
   .workspace {
     grid-template-columns: 1fr;
   }
