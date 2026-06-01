@@ -3,7 +3,7 @@ import {
     formatSavedAt,
     normalizeFileName,
     getByteSize,
-} from '../App';
+} from '../lib/format';
 
 // Characterization tests — pin ACTUAL current output.
 // These tests describe what the function does today, not what it "should" do.
