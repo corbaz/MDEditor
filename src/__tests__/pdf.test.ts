@@ -4,7 +4,7 @@ import {
     groupItemsIntoLines,
     buildPageMarkdown,
     decodePdfDataUrl,
-} from '../App';
+} from '../lib/pdf';
 
 // Characterization tests — pin ACTUAL current output.
 // These tests describe what the function does today, not what it "should" do.

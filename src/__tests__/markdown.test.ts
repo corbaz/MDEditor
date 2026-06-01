@@ -1,4 +1,4 @@
-import { normalizeMarkdownForRichEditor } from '../App';
+import { normalizeMarkdownForRichEditor } from '../lib/markdown';
 
 // Characterization tests — pin ACTUAL current output.
 // These tests describe what the function does today, not what it "should" do.

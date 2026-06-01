@@ -50,8 +50,22 @@ import {
     UndoRedo,
 } from '@mdxeditor/editor';
 import './App.css';
+import { getByteSize, formatFileSize, formatSavedAt, normalizeFileName, type Locale } from './lib/format';
+import { normalizeMarkdownForRichEditor } from './lib/markdown';
+import { escapeHtml, replaceSelectedTextInMarkdown, type InlineStyleKind } from './lib/inline-style';
+import {
+    decodePdfDataUrl,
+    computeHeadingThresholds,
+    groupItemsIntoLines,
+    buildPageMarkdown,
+    PDF_IMAGE_OPS,
+    PDF_MIN_IMAGE_PX,
+    type PdfTextItem,
+    type PdfRawLine,
+    type PdfImageData,
+    type PdfPageLike,
+} from './lib/pdf';
 
-type Locale = 'es' | 'en';
 type Theme = 'light' | 'dark';
 type ViewMode = 'editor' | 'source' | 'preview';
 type MaybeFileHandle = {
@@ -78,8 +92,6 @@ type WindowWithLocalFonts = Window & {
     queryLocalFonts?: () => Promise<LocalFontData[]>;
 };
 
-type InlineStyleKind = 'textColor' | 'highlight' | 'font';
-
 type PdfViewerDocument = {
     filePath: string;
     filename: string;
@@ -95,25 +107,6 @@ type EditorDocument = {
     sizeBytes?: number;
 };
 
-type PdfTextItem = {
-    str?: string;
-    hasEOL?: boolean;
-    transform?: number[]; // [a, b, c, d, x, y] — current text matrix
-    width?: number;
-};
-
-type PdfRawLine = {
-    text: string;
-    fontSize: number;
-    y: number;
-};
-
-type PdfImageData = {
-    data: Uint8ClampedArray | Uint8Array;
-    width: number;
-    height: number;
-    kind?: number;
-};
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -127,259 +120,7 @@ const toLocalImagePath = (src: string) => {
     return null;
 };
 
-// HTML element names that should be preserved inside markdown when found in <brackets>.
-// Anything else (e.g. <nombre_rama>, <commit>, <archivo.zip>) is a placeholder, not HTML,
-// and causes Lexical's parser to silently fail to render the document.
-const KNOWN_HTML_ELEMENTS = new Set([
-    'a',
-    'abbr',
-    'address',
-    'area',
-    'article',
-    'aside',
-    'audio',
-    'b',
-    'base',
-    'bdi',
-    'bdo',
-    'blockquote',
-    'body',
-    'br',
-    'button',
-    'canvas',
-    'caption',
-    'cite',
-    'code',
-    'col',
-    'colgroup',
-    'data',
-    'datalist',
-    'dd',
-    'del',
-    'details',
-    'dfn',
-    'dialog',
-    'div',
-    'dl',
-    'dt',
-    'em',
-    'embed',
-    'fieldset',
-    'figcaption',
-    'figure',
-    'footer',
-    'form',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'head',
-    'header',
-    'hgroup',
-    'hr',
-    'html',
-    'i',
-    'iframe',
-    'img',
-    'input',
-    'ins',
-    'kbd',
-    'label',
-    'legend',
-    'li',
-    'link',
-    'main',
-    'map',
-    'mark',
-    'math',
-    'menu',
-    'meta',
-    'meter',
-    'nav',
-    'noscript',
-    'object',
-    'ol',
-    'optgroup',
-    'option',
-    'output',
-    'p',
-    'picture',
-    'pre',
-    'progress',
-    'q',
-    'rp',
-    'rt',
-    'ruby',
-    's',
-    'samp',
-    'script',
-    'section',
-    'select',
-    'slot',
-    'small',
-    'source',
-    'span',
-    'strong',
-    'style',
-    'sub',
-    'summary',
-    'sup',
-    'svg',
-    'table',
-    'tbody',
-    'td',
-    'template',
-    'textarea',
-    'tfoot',
-    'th',
-    'thead',
-    'time',
-    'title',
-    'tr',
-    'track',
-    'u',
-    'ul',
-    'var',
-    'video',
-    'wbr',
-]);
 
-export const normalizeMarkdownForRichEditor = (value: string): string => {
-    // Step 1: strip HTML tags from heading lines (e.g. ## Heading <br/>)
-    const withNormalizedHeadings = value
-        .split('\n')
-        .map((line) => {
-            if (!/^\s*#{1,6}\s/.test(line) || !/[<>]/.test(line)) return line;
-            return line
-                .replace(/<br\s*\/?>/gi, ' ')
-                .replace(/<[^>]+>/g, '')
-                .replace(/\s{2,}/g, ' ')
-                .trimEnd();
-        })
-        .join('\n');
-
-    // Step 2: escape non-HTML angle-bracket placeholders like <nombre_rama>, <commit>, <archivo.zip>.
-    // MDXEditor's internal pipeline (micromark) treats these as unclosed JSX elements and silently
-    // fails to render the entire document. Backslash-escaping the < at tokenizer level (before any
-    // entity decoding) is more reliable than HTML entities (&lt;) which can be decoded and re-exposed.
-    const withEscapedPlaceholders = withNormalizedHeadings.replace(
-        /<([^>]*)>/g,
-        (match, inner) => {
-            const trimmed = inner.trim();
-            // Preserve HTML comments (<!-- ... -->) and DOCTYPE declarations
-            if (trimmed.startsWith('!--') || /^!DOCTYPE/i.test(trimmed))
-                return match;
-            // Extract the element name (strip leading / for closing tags, stop at whitespace or /)
-            const tagName = trimmed
-                .replace(/^\//, '')
-                .split(/[\s\n\r/]/)[0]
-                .toLowerCase();
-            // Only known HTML elements are safe to pass through to the MDX parser
-            if (KNOWN_HTML_ELEMENTS.has(tagName)) return match;
-            // Everything else is a placeholder — use backslash escape at tokenizer level
-            return `\\<${inner}\\>`;
-        }
-    );
-
-    // Step 3: escape bare { } that MDX treats as JS expression delimiters.
-    // Any {text} or standalone { not part of a valid JS expression will cause a parse error.
-    const withEscapedBraces = withEscapedPlaceholders.replace(/[{}]/g, (ch) =>
-        ch === '{' ? '\\{' : '\\}'
-    );
-
-    // Step 4: escape bare '<' not followed by a valid HTML/JSX tag-start character.
-    // The <tag> regex in step 2 only matches when there is a closing '>', so comparison
-    // operators like "5 < 10" or "value < end" pass through as raw '<'. MDXEditor's MDX
-    // pipeline (micromark) treats a bare '<' as an unclosed JSX element and silently
-    // discards the entire document, leaving the editor blank.
-    return withEscapedBraces.replace(/(?<!\\)<(?![a-zA-Z/!?])/g, '\\<');
-};
-
-export const decodePdfDataUrl = (dataUrl: string) => {
-    const [, base64 = ''] = dataUrl.split(',', 2);
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let index = 0; index < binary.length; index += 1) {
-        bytes[index] = binary.charCodeAt(index);
-    }
-
-    return bytes;
-};
-
-// ── PDF extraction helpers ────────────────────────────────────────────────
-
-/** pdfjs operator codes that represent raster image drawing. */
-const PDF_IMAGE_OPS = new Set([82, 83, 85, 88]); // paintJpegXObject | paintInlineImageXObject | paintImageXObject | paintImageMaskXObject
-const PDF_MIN_IMAGE_PX = 50; // skip icons / decorations smaller than this
-
-/** Font size from a pdfjs text matrix [a, b, c, d, x, y]. */
-export const getItemFontSize = (transform: number[] | undefined): number => {
-    if (!transform || transform.length < 2) return 0;
-    return Math.round(Math.sqrt(transform[0] ** 2 + transform[1] ** 2));
-};
-
-/** Determine font-size thresholds for h1/h2/h3 based on the modal body size. */
-export const computeHeadingThresholds = (
-    sizes: number[]
-): { h1: number; h2: number; h3: number; body: number } => {
-    const pos = sizes.filter((s) => s > 0);
-    if (!pos.length) return { h1: 22, h2: 16, h3: 13, body: 11 };
-
-    const freq = new Map<number, number>();
-    for (const s of pos) freq.set(s, (freq.get(s) ?? 0) + 1);
-    const body = [...freq.entries()].sort((a, b) => b[1] - a[1])[0][0];
-
-    return { h1: body * 1.85, h2: body * 1.4, h3: body * 1.15, body };
-};
-
-/** Group pdfjs text items into visual lines sorted top → bottom. */
-export const groupItemsIntoLines = (items: PdfTextItem[]): PdfRawLine[] => {
-    const Y_TOL = 2;
-    const groups = new Map<
-        number,
-        Array<{ x: number; text: string; fontSize: number }>
-    >();
-
-    for (const item of items) {
-        const str = (item.str ?? '').replace(/\s+/g, ' ');
-        if (!str) continue;
-
-        const t = item.transform;
-        const y = t ? Math.round(t[5]) : 0;
-        const x = t ? (t[4] ?? 0) : 0;
-        const fontSize = getItemFontSize(t);
-
-        let key: number | undefined;
-        for (const k of groups.keys()) {
-            if (Math.abs(k - y) <= Y_TOL) {
-                key = k;
-                break;
-            }
-        }
-        const groupY = key ?? y;
-        if (!groups.has(groupY)) groups.set(groupY, []);
-        groups.get(groupY)!.push({ x, text: str, fontSize });
-    }
-
-    return [...groups.entries()]
-        .sort((a, b) => b[0] - a[0]) // descending Y → top of page first
-        .map(([y, parts]) => {
-            const sorted = [...parts].sort((a, b) => a.x - b.x);
-            return {
-                y,
-                text: sorted
-                    .map((p) => p.text)
-                    .join(' ')
-                    .replace(/\s+/g, ' ')
-                    .trim(),
-                fontSize: Math.max(...sorted.map((p) => p.fontSize)),
-            };
-        })
-        .filter((l) => l.text.length > 0);
-};
 
 /** Resolve an image XObject from the page's object store (async-safe). */
 const resolvePageObject = (
@@ -489,12 +230,6 @@ const pdfImageToDataUrl = (imgData: {
     }
 };
 
-type PdfPageLike = {
-    objs: { get: (ref: string, cb: (d: PdfImageData | null) => void) => void };
-    commonObjs: {
-        get: (ref: string, cb: (d: PdfImageData | null) => void) => void;
-    };
-};
 
 /** Extract all raster images from a page, returning JPEG data URLs.
  *  Requires ops from page.getOperatorList() (pre-fetched, shared with text pass). */
@@ -527,57 +262,6 @@ const extractPageImages = async (
     return urls;
 };
 
-/** Build the markdown block for a single PDF page (no page-header wrapper). */
-export const buildPageMarkdown = (
-    lines: PdfRawLine[],
-    images: string[],
-    thresholds: { h1: number; h2: number; h3: number; body: number },
-    pageLabel: string,
-    pageNum: number
-): string => {
-    if (!lines.length && !images.length) return '';
-
-    const parts: string[] = [];
-    let para: string[] = [];
-    const paraGap = thresholds.body * 2.5;
-
-    const flushPara = () => {
-        if (para.length) {
-            parts.push(para.join(' '));
-            para = [];
-        }
-    };
-
-    let prevY: number | null = null;
-
-    for (const { text, fontSize, y } of lines) {
-        const gap = prevY !== null ? prevY - y : 0;
-        prevY = y;
-
-        // Headings are shifted one level down (###/####/#####) so they nest
-        // cleanly under the ## Page N section header added by the caller.
-        if (fontSize >= thresholds.h1) {
-            flushPara();
-            parts.push(`### ${text}`);
-        } else if (fontSize >= thresholds.h2) {
-            flushPara();
-            parts.push(`#### ${text}`);
-        } else if (fontSize >= thresholds.h3) {
-            flushPara();
-            parts.push(`##### ${text}`);
-        } else {
-            if (gap > paraGap) flushPara();
-            para.push(text);
-        }
-    }
-    flushPara();
-
-    for (let j = 0; j < images.length; j++) {
-        parts.push(`![${pageLabel} ${pageNum} imagen ${j + 1}](${images[j]})`);
-    }
-
-    return parts.join('\n\n').trim();
-};
 
 // ── Main extraction entry point ───────────────────────────────────────────
 
@@ -743,33 +427,6 @@ const getReadableMarkdown = (value: string) =>
         (match) => `${match.slice(0, 100)}...`
     );
 
-export const getByteSize = (value: string) => new Blob([value]).size;
-
-export const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024)
-        return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
-};
-
-export const formatSavedAt = (value: number | null, locale: Locale) => {
-    if (!value) return locale === 'es' ? 'sin guardar' : 'not saved';
-
-    return new Intl.DateTimeFormat(locale === 'es' ? 'es-AR' : 'en-US', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(new Date(value));
-};
-
-export const normalizeFileName = (value: string) => {
-    const trimmed = value.trim() || 'untitled.md';
-    return trimmed.toLowerCase().endsWith('.md')
-        ? trimmed
-        : `${trimmed}.md`;
-};
 
 const fileToBase64 = async (file: File) => {
     const buffer = await file.arrayBuffer();
@@ -786,110 +443,6 @@ const fileToBase64 = async (file: File) => {
     return btoa(binary);
 };
 
-export const escapeHtml = (value: string) =>
-    value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
-export const sanitizeStyleValue = (value: string) =>
-    value.replace(/[;"<>]/g, '').trim();
-
-export const escapeRegExp = (value: string) =>
-    value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-export const getStyleDeclaration = (kind: InlineStyleKind, value: string) => {
-    const cleanValue = sanitizeStyleValue(value);
-    if (kind === 'textColor') return { property: 'color', value: cleanValue };
-    if (kind === 'highlight')
-        return { property: 'background-color', value: cleanValue };
-    return { property: 'font-family', value: cleanValue };
-};
-
-export const mergeStyle = (
-    currentStyle: string,
-    kind: InlineStyleKind,
-    value: string
-) => {
-    const styles = new Map<string, string>();
-    currentStyle
-        .split(';')
-        .map((declaration) => declaration.trim())
-        .filter(Boolean)
-        .forEach((declaration) => {
-            const separatorIndex = declaration.indexOf(':');
-            if (separatorIndex < 0) return;
-            styles.set(
-                declaration.slice(0, separatorIndex).trim().toLowerCase(),
-                declaration.slice(separatorIndex + 1).trim()
-            );
-        });
-
-    const nextStyle = getStyleDeclaration(kind, value);
-    styles.set(nextStyle.property, nextStyle.value);
-
-    return Array.from(styles.entries())
-        .map(([property, styleValue]) => `${property}: ${styleValue}`)
-        .join('; ');
-};
-
-export const getStyledMarkdown = (
-    kind: InlineStyleKind,
-    value: string,
-    selectionText: string
-) => {
-    const content = escapeHtml(selectionText);
-    return `<span style="${mergeStyle('', kind, value)}">${content}</span>`;
-};
-
-export const replaceSelectedTextInMarkdown = (
-    source: string,
-    selectedText: string,
-    kind: InlineStyleKind,
-    value: string
-) => {
-    const escapedSelection = escapeRegExp(escapeHtml(selectedText));
-    const styledTextPattern = new RegExp(
-        `<(span|mark)([^>]*)style=["']([^"']*)["']([^>]*)>${escapedSelection}</\\1>`,
-        'i'
-    );
-    const styledTextMatch = source.match(styledTextPattern);
-    if (styledTextMatch?.index !== undefined) {
-        const [
-            fullMatch,
-            tagName,
-            beforeStyle = '',
-            currentStyle = '',
-            afterStyle = '',
-        ] = styledTextMatch;
-        const merged = `<${tagName}${beforeStyle}style="${mergeStyle(currentStyle, kind, value)}"${afterStyle}>${escapeHtml(selectedText)}</${tagName}>`;
-        return `${source.slice(0, styledTextMatch.index)}${merged}${source.slice(styledTextMatch.index + fullMatch.length)}`;
-    }
-
-    const replacement = getStyledMarkdown(kind, value, selectedText);
-    const directIndex = source.indexOf(selectedText);
-    if (directIndex >= 0) {
-        return `${source.slice(0, directIndex)}${replacement}${source.slice(directIndex + selectedText.length)}`;
-    }
-
-    const normalizedSelection = selectedText.replace(/\s+/g, ' ').trim();
-    const lines = source.split('\n');
-    for (let index = 0; index < lines.length; index += 1) {
-        const line = lines[index];
-        const normalizedLine = line.replace(/\s+/g, ' ');
-        const lineIndex = normalizedLine.indexOf(normalizedSelection);
-        if (lineIndex >= 0) {
-            const prefix = line.slice(0, lineIndex);
-            const suffix = line.slice(lineIndex + normalizedSelection.length);
-            lines[index] = `${prefix}${replacement}${suffix}`;
-            return lines.join('\n');
-        }
-    }
-
-    return source;
-};
 
 const esTranslations: Record<string, string> = {
     Undo: 'Deshacer',
