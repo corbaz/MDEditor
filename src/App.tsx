@@ -5,15 +5,8 @@ import {
 } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import {
-    Download,
-    Eye,
-    ExternalLink,
-    FilePlus,
-    FolderOpen,
     Highlighter,
     Palette,
-    Save,
-    Trash2,
 } from 'lucide-react';
 import {
     BlockTypeSelect,
@@ -63,12 +56,9 @@ import type { Theme, ViewMode, MaybeFileHandle, RecentDocument, PdfViewerDocumen
 import { LoadingOverlay } from './components/LoadingOverlay/LoadingOverlay';
 import { StatusBar } from './components/StatusBar/StatusBar';
 import { PreviewContent } from './components/PreviewPane/PreviewContent';
-import { ThemeSwitch } from './components/ThemeSwitch/ThemeSwitch';
-import { LocaleSwitch } from './components/LocaleSwitch/LocaleSwitch';
-import { ViewModeSwitch } from './components/ViewModeSwitch/ViewModeSwitch';
-import { FileHistoryMenu } from './components/FileHistoryMenu/FileHistoryMenu';
 import { PreviewPane } from './components/PreviewPane/PreviewPane';
 import { PdfModal } from './components/PdfModal/PdfModal';
+import { AppHeader } from './components/AppHeader/AppHeader';
 
 type LocalFontData = {
     family: string;
@@ -1400,115 +1390,35 @@ function App() {
             className={`app ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}
             data-testid="app-root"
         >
-            <header className="appHeader" data-testid="app-header">
-                <div className="headerLeft">
-                    <h1>MD Editor</h1>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon"
-                        onClick={() => void createNewDocument()}
-                        aria-label={actionLabels.create}
-                        data-label={actionLabels.create}
-                        data-testid="btn-new"
-                    >
-                        <FilePlus size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon"
-                        onClick={openFromDevice}
-                        aria-label={actionLabels.open}
-                        data-label={actionLabels.open}
-                    >
-                        <FolderOpen size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className={`iconBtn actionIcon saveBtn ${saveStatus}`}
-                        onClick={saveToDevice}
-                        aria-label={actionLabels.save}
-                        data-label={actionLabels.save}
-                        data-testid="btn-save"
-                    >
-                        <Save size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon dangerBtn"
-                        onClick={() => void deleteCurrentFile()}
-                        aria-label={actionLabels.delete}
-                        data-label={actionLabels.delete}
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={downloadMarkdown}
-                        aria-label={actionLabels.downloadMd}
-                        data-label={actionLabels.downloadMd}
-                    >
-                        <Download size={16} />
-                        <span className="iconBadge">MD</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={openGeneratedPdfPreview}
-                        aria-label={actionLabels.previewPdf}
-                        data-label={actionLabels.previewPdf}
-                    >
-                        <Eye size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={() => void openPdf()}
-                        aria-label={actionLabels.openPdf}
-                        data-label={actionLabels.openPdf}
-                    >
-                        <ExternalLink size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={() => void downloadPdf()}
-                        aria-label={actionLabels.downloadPdf}
-                        data-label={actionLabels.downloadPdf}
-                    >
-                        <Download size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                </div>
-                <FileHistoryMenu
-                    fileName={fileName}
-                    recentDocuments={recentDocuments}
-                    isEditingFileName={isEditingFileName}
-                    isHistoryOpen={isHistoryOpen}
-                    locale={locale}
-                    fileNameInputRef={fileNameInputRef}
-                    onFileNameChange={setFileName}
-                    onFileNameCommit={commitFileNameRename}
-                    onFileNameKeyDown={handleFileNameKeyDown}
-                    onToggleHistory={() => setIsHistoryOpen((open) => !open)}
-                    onStartRename={startFileNameRename}
-                    onSelectRecent={(filename) => void openRecentDocument(filename)}
-                />
-                <ThemeSwitch
-                    theme={theme}
-                    onThemeChange={setTheme}
-                />
-                <LocaleSwitch
-                    locale={locale}
-                    onLocaleChange={setLocale}
-                />
-                <ViewModeSwitch
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                />
-            </header>
+            <AppHeader
+                theme={theme}
+                locale={locale}
+                viewMode={viewMode}
+                fileName={fileName}
+                recentDocuments={recentDocuments}
+                isEditingFileName={isEditingFileName}
+                isHistoryOpen={isHistoryOpen}
+                fileNameInputRef={fileNameInputRef}
+                actionLabels={actionLabels}
+                saveStatus={saveStatus}
+                onNew={() => void createNewDocument()}
+                onOpen={openFromDevice}
+                onSave={saveToDevice}
+                onDelete={() => void deleteCurrentFile()}
+                onDownloadMd={downloadMarkdown}
+                onPreviewPdf={openGeneratedPdfPreview}
+                onOpenPdf={() => void openPdf()}
+                onDownloadPdf={() => void downloadPdf()}
+                onThemeChange={setTheme}
+                onLocaleChange={setLocale}
+                onViewModeChange={setViewMode}
+                onFileNameChange={setFileName}
+                onFileNameCommit={commitFileNameRename}
+                onFileNameKeyDown={handleFileNameKeyDown}
+                onToggleHistory={() => setIsHistoryOpen((open) => !open)}
+                onStartRename={startFileNameRename}
+                onSelectRecent={(filename) => void openRecentDocument(filename)}
+            />
 
             <section className="workspace" data-testid="workspace">
                 {viewMode === 'editor' && (
