@@ -4,37 +4,7 @@ import {
     getDocument,
 } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import {
-    Highlighter,
-    Palette,
-} from 'lucide-react';
-import {
-    BlockTypeSelect,
-    BoldItalicUnderlineToggles,
-    CodeToggle,
-    CreateLink,
-    InsertCodeBlock,
-    InsertImage,
-    InsertTable,
-    InsertThematicBreak,
-    StrikeThroughSupSubToggles,
-    codeBlockPlugin,
-    codeMirrorPlugin,
-    headingsPlugin,
-    imagePlugin,
-    linkDialogPlugin,
-    linkPlugin,
-    listsPlugin,
-    markdownShortcutPlugin,
-    quotePlugin,
-    tablePlugin,
-    thematicBreakPlugin,
-    toolbarPlugin,
-    type MDXEditorMethods,
-    ListsToggle,
-    MDXEditor,
-    UndoRedo,
-} from '@mdxeditor/editor';
+import { type MDXEditorMethods } from '@mdxeditor/editor';
 import './App.css';
 import { getByteSize, normalizeFileName, type Locale } from './lib/format';
 import { normalizeMarkdownForRichEditor } from './lib/markdown';
@@ -59,6 +29,7 @@ import { PreviewContent } from './components/PreviewPane/PreviewContent';
 import { PreviewPane } from './components/PreviewPane/PreviewPane';
 import { PdfModal } from './components/PdfModal/PdfModal';
 import { AppHeader } from './components/AppHeader/AppHeader';
+import { EditorPane } from './components/EditorPane/EditorPane';
 
 type LocalFontData = {
     family: string;
@@ -348,53 +319,6 @@ const fileToBase64 = async (file: File) => {
 };
 
 
-const esTranslations: Record<string, string> = {
-    Undo: 'Deshacer',
-    Redo: 'Rehacer',
-    Bold: 'Negrita',
-    Italic: 'Cursiva',
-    Underline: 'Subrayado',
-    Strikethrough: 'Tachado',
-    Superscript: 'Superíndice',
-    Subscript: 'Subíndice',
-    Code: 'Código',
-    Paragraph: 'Párrafo',
-    Quote: 'Cita',
-    'Bulleted list': 'Lista con viñetas',
-    'Numbered list': 'Lista numerada',
-    'Task list': 'Lista de tareas',
-    'Create link': 'Crear enlace',
-    'Insert image': 'Insertar imagen',
-    'Insert table': 'Insertar tabla',
-    'Insert code block': 'Insertar bloque de código',
-    'Insert thematic break': 'Insertar separador',
-    'Rich text': 'Texto enriquecido',
-    Source: 'Fuente',
-    Diff: 'Diferencias',
-    'Upload an image': 'Subir una imagen',
-    'Upload an image from your device:':
-        'Subir una imagen desde tu dispositivo:',
-    'Or add an image from an URL:': 'O agregar una imagen desde una URL:',
-    'Add an image from an URL:': 'Agregar una imagen desde una URL:',
-    'Select or paste an image src': 'Selecciona o pega una URL de imagen',
-    'Alt:': 'Texto alternativo:',
-    'Title:': 'Título:',
-    'Width:': 'Ancho:',
-    'Height:': 'Alto:',
-    Save: 'Guardar',
-    Cancel: 'Cancelar',
-    URL: 'URL',
-    'Select or paste an URL': 'Selecciona o pega una URL',
-    'Anchor text': 'Texto del enlace',
-    'Link title': 'Título del enlace',
-    'Set URL': 'Guardar URL',
-    'Cancel change': 'Cancelar cambio',
-    'Edit link URL': 'Editar enlace',
-    'Copy to clipboard': 'Copiar al portapapeles',
-    'Copied!': 'Copiado!',
-    'Remove link': 'Eliminar enlace',
-};
-
 function App() {
     const [locale, setLocale] = useState<Locale>('es');
     const [theme, setTheme] = useState<Theme>('dark');
@@ -437,26 +361,6 @@ function App() {
     const saveStatusTimeoutRef = useRef<number | null>(null);
     const lastAutoSavedSignatureRef = useRef('');
     const pendingEditorMarkdownRef = useRef<string | null>(null);
-
-    const translation = (
-        key: string,
-        defaultValue: string,
-        interpolations?: Record<string, string | number>
-    ) => {
-        if (key === 'toolbar.blockTypes.heading' && interpolations?.level) {
-            return `H${interpolations.level}`;
-        }
-
-        const translated =
-            locale === 'en'
-                ? defaultValue
-                : (esTranslations[defaultValue] ?? defaultValue);
-        return Object.entries(interpolations ?? {}).reduce(
-            (label, [name, value]) =>
-                label.replaceAll(`{{${name}}}`, String(value)),
-            translated
-        );
-    };
 
     const imageUploadHandler = useMemo(
         () => async (image: File) => {
@@ -1422,239 +1326,36 @@ function App() {
 
             <section className="workspace" data-testid="workspace">
                 {viewMode === 'editor' && (
-                    <div className="editorWrap" data-testid="editor-wrap">
-                        <MDXEditor
-                            key={editorDocumentKey}
-                            ref={editorRef}
-                            markdown={markdown}
-                            onChange={setMarkdown}
-                            translation={translation}
-                            className="editor"
-                            plugins={[
-                                headingsPlugin(),
-                                listsPlugin(),
-                                linkPlugin(),
-                                linkDialogPlugin(),
-                                quotePlugin(),
-                                tablePlugin(),
-                                imagePlugin({
-                                    imageUploadHandler,
-                                    imagePreviewHandler,
-                                    allowSetImageDimensions: true,
-                                }),
-                                codeBlockPlugin({
-                                    defaultCodeBlockLanguage: 'txt',
-                                }),
-                                codeMirrorPlugin({
-                                    codeBlockLanguages: {
-                                        txt: 'Text',
-                                        js: 'JavaScript',
-                                        ts: 'TypeScript',
-                                        css: 'CSS',
-                                        html: 'HTML',
-                                        json: 'JSON',
-                                        md: 'Markdown',
-                                        bash: 'Bash',
-                                    },
-                                }),
-                                thematicBreakPlugin(),
-                                markdownShortcutPlugin(),
-                                toolbarPlugin({
-                                    toolbarContents: () => (
-                                        <>
-                                            <UndoRedo />
-                                            <BoldItalicUnderlineToggles />
-                                            <StrikeThroughSupSubToggles />
-                                            <CodeToggle />
-                                            <BlockTypeSelect />
-                                            <ListsToggle />
-                                            <CreateLink />
-                                            <InsertImage />
-                                            <InsertTable />
-                                            <InsertCodeBlock />
-                                            <InsertThematicBreak />
-                                            <div
-                                                className="styleTools"
-                                                onMouseDown={rememberSelection}
-                                            >
-                                                <div
-                                                    className="styleToolGroup"
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Color de texto'
-                                                            : 'Text color'
-                                                    }
-                                                >
-                                                    <Palette size={15} />
-                                                    {textColors.map((color) => (
-                                                        <button
-                                                            key={color}
-                                                            type="button"
-                                                            className="colorSwatch"
-                                                            style={{
-                                                                backgroundColor:
-                                                                    color,
-                                                            }}
-                                                            aria-label={
-                                                                locale === 'es'
-                                                                    ? 'Color de texto'
-                                                                    : 'Text color'
-                                                            }
-                                                            onMouseDown={(
-                                                                event
-                                                            ) =>
-                                                                event.preventDefault()
-                                                            }
-                                                            onClick={() => {
-                                                                setSelectedTextColor(
-                                                                    color
-                                                                );
-                                                                applyInlineStyle(
-                                                                    'textColor',
-                                                                    color
-                                                                );
-                                                            }}
-                                                        />
-                                                    ))}
-                                                    <input
-                                                        type="color"
-                                                        value={
-                                                            selectedTextColor
-                                                        }
-                                                        aria-label={
-                                                            locale === 'es'
-                                                                ? 'Elegir color de texto'
-                                                                : 'Choose text color'
-                                                        }
-                                                        onChange={(event) => {
-                                                            setSelectedTextColor(
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                            applyInlineStyle(
-                                                                'textColor',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div
-                                                    className="styleToolGroup"
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Fondo resaltado'
-                                                            : 'Highlight'
-                                                    }
-                                                >
-                                                    <Highlighter size={15} />
-                                                    {highlightColors.map(
-                                                        (color) => (
-                                                            <button
-                                                                key={color}
-                                                                type="button"
-                                                                className="colorSwatch"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        color,
-                                                                }}
-                                                                aria-label={
-                                                                    locale ===
-                                                                    'es'
-                                                                        ? 'Fondo resaltado'
-                                                                        : 'Highlight'
-                                                                }
-                                                                onMouseDown={(
-                                                                    event
-                                                                ) =>
-                                                                    event.preventDefault()
-                                                                }
-                                                                onClick={() => {
-                                                                    setSelectedHighlightColor(
-                                                                        color
-                                                                    );
-                                                                    applyInlineStyle(
-                                                                        'highlight',
-                                                                        color
-                                                                    );
-                                                                }}
-                                                            />
-                                                        )
-                                                    )}
-                                                    <input
-                                                        type="color"
-                                                        value={
-                                                            selectedHighlightColor
-                                                        }
-                                                        aria-label={
-                                                            locale === 'es'
-                                                                ? 'Elegir fondo resaltado'
-                                                                : 'Choose highlight'
-                                                        }
-                                                        onChange={(event) => {
-                                                            setSelectedHighlightColor(
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                            applyInlineStyle(
-                                                                'highlight',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                                <select
-                                                    className="fontSelect"
-                                                    value={selectedFont}
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Fuente'
-                                                            : 'Font'
-                                                    }
-                                                    aria-label={
-                                                        locale === 'es'
-                                                            ? 'Fuente'
-                                                            : 'Font'
-                                                    }
-                                                    onMouseDown={
-                                                        rememberSelection
-                                                    }
-                                                    onChange={(event) => {
-                                                        setSelectedFont(
-                                                            event.target.value
-                                                        );
-                                                        if (
-                                                            event.target
-                                                                .value !==
-                                                            'System'
-                                                        ) {
-                                                            applyInlineStyle(
-                                                                'font',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }
-                                                    }}
-                                                >
-                                                    {availableFonts.map(
-                                                        (font) => (
-                                                            <option
-                                                                key={font}
-                                                                value={font}
-                                                            >
-                                                                {font}
-                                                            </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                            </div>
-                                        </>
-                                    ),
-                                }),
-                            ]}
-                        />
-                    </div>
+                    <EditorPane
+                        ref={editorRef}
+                        locale={locale}
+                        markdown={markdown}
+                        editorDocumentKey={editorDocumentKey}
+                        imageUploadHandler={imageUploadHandler}
+                        imagePreviewHandler={imagePreviewHandler}
+                        textColors={textColors}
+                        highlightColors={highlightColors}
+                        availableFonts={availableFonts}
+                        selectedTextColor={selectedTextColor}
+                        selectedHighlightColor={selectedHighlightColor}
+                        selectedFont={selectedFont}
+                        onApplyTextColor={(color) => {
+                            setSelectedTextColor(color);
+                            applyInlineStyle('textColor', color);
+                        }}
+                        onApplyHighlight={(color) => {
+                            setSelectedHighlightColor(color);
+                            applyInlineStyle('highlight', color);
+                        }}
+                        onApplyFont={(font) => {
+                            setSelectedFont(font);
+                            if (font !== 'System') {
+                                applyInlineStyle('font', font);
+                            }
+                        }}
+                        onRememberSelection={rememberSelection}
+                        onChange={setMarkdown}
+                    />
                 )}
 
                 {viewMode === 'source' && (
