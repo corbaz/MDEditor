@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import {
     GlobalWorkerOptions,
     getDocument,
@@ -13,7 +10,6 @@ import {
     Eye,
     ExternalLink,
     FilePlus,
-    Folder,
     FolderOpen,
     Highlighter,
     Palette,
@@ -50,7 +46,7 @@ import {
     UndoRedo,
 } from '@mdxeditor/editor';
 import './App.css';
-import { getByteSize, formatFileSize, formatSavedAt, normalizeFileName, type Locale } from './lib/format';
+import { getByteSize, normalizeFileName, type Locale } from './lib/format';
 import { normalizeMarkdownForRichEditor } from './lib/markdown';
 import { escapeHtml, replaceSelectedTextInMarkdown, type InlineStyleKind } from './lib/inline-style';
 import {
@@ -67,6 +63,9 @@ import {
 } from './lib/pdf';
 
 import type { Theme, ViewMode, MaybeFileHandle, RecentDocument, PdfViewerDocument } from './types';
+import { LoadingOverlay } from './components/LoadingOverlay/LoadingOverlay';
+import { StatusBar } from './components/StatusBar/StatusBar';
+import { PreviewContent } from './components/PreviewPane/PreviewContent';
 
 type LocalFontData = {
     family: string;
@@ -301,72 +300,6 @@ const extractMarkdownFromPdf = async (
         await loadingTask.destroy();
     }
 };
-
-function PreviewImage({
-    src = '',
-    alt = '',
-    width,
-    height,
-}: {
-    src?: string;
-    alt?: string;
-    width?: string | number;
-    height?: string | number;
-}) {
-    const [resolvedImage, setResolvedImage] = useState({
-        source: src,
-        resolved: src,
-    });
-    const localPath = toLocalImagePath(src);
-    const shouldResolveLocalImage =
-        Boolean(localPath) && !isRenderableImageSrc(src);
-    const displaySrc =
-        shouldResolveLocalImage && resolvedImage.source === src
-            ? resolvedImage.resolved
-            : src;
-
-    useEffect(() => {
-        let cancelled = false;
-        const localPath = toLocalImagePath(src);
-
-        if (!localPath || isRenderableImageSrc(src)) return;
-
-        const loadLocalImage = async () => {
-            try {
-                const dataUrl =
-                    await window.electronAPI?.readLocalImageAsDataUrl(
-                        localPath
-                    );
-                if (!cancelled)
-                    setResolvedImage({ source: src, resolved: dataUrl ?? src });
-            } catch {
-                if (!cancelled)
-                    setResolvedImage({ source: src, resolved: src });
-            }
-        };
-
-        void loadLocalImage();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [src]);
-
-    return (
-        <img
-            className="previewImage"
-            src={displaySrc}
-            alt={alt}
-            width={width}
-            height={height}
-            style={{
-                maxWidth: '100%',
-                width: width ? undefined : 'auto',
-                height: height ? undefined : 'auto',
-            }}
-        />
-    );
-}
 
 const initialMarkdown = '';
 
@@ -899,34 +832,6 @@ function App() {
         anchor.click();
         URL.revokeObjectURL(url);
     };
-
-    const renderPreviewMarkdown = () => (
-        <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            urlTransform={(url) => {
-                if (
-                    /^data:image\/(?:gif|jpeg|jpg|png|webp|svg\+xml);base64,/i.test(
-                        url
-                    )
-                )
-                    return url;
-                return url;
-            }}
-            components={{
-                img: ({ src = '', alt = '', width, height }) => (
-                    <PreviewImage
-                        src={src}
-                        alt={alt}
-                        width={width}
-                        height={height}
-                    />
-                ),
-            }}
-        >
-            {markdown}
-        </ReactMarkdown>
-    );
 
     const waitForPreviewAssets = useCallback(async (root: HTMLElement) => {
         const images = Array.from(root.querySelectorAll('img'));
@@ -1964,25 +1869,24 @@ function App() {
                         </div>
                         <div className="pdfPreviewViewport screenPreviewViewport">
                             <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                {renderPreviewMarkdown()}
+                                <PreviewContent markdown={markdown} />
                             </div>
                         </div>
                     </aside>
                 )}
             </section>
 
-            <footer className="app-footer" data-testid="app-footer-status">
-                <div className="fileMeta" title={folderPath || visibleFolder}>
-                    <Folder size={13} />
-                    <span className="fileMetaFolder">{visibleFolder}</span>
-                    <span>{formatFileSize(currentSizeBytes)}</span>
-                    <span>{formatSavedAt(lastSavedAt, locale)}</span>
-                </div>
-            </footer>
+            <StatusBar
+                folderPath={folderPath}
+                visibleFolder={visibleFolder}
+                currentSizeBytes={currentSizeBytes}
+                lastSavedAt={lastSavedAt}
+                locale={locale}
+            />
 
             <div className="pdfPreviewStaging" aria-hidden="true">
                 <div ref={previewExportRef} className="pdfPreviewPage">
-                    {renderPreviewMarkdown()}
+                    <PreviewContent markdown={markdown} />
                 </div>
             </div>
 
@@ -2069,7 +1973,7 @@ function App() {
                                 />
                             ) : (
                                 <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                    {renderPreviewMarkdown()}
+                                    <PreviewContent markdown={markdown} />
                                 </div>
                             )}
                         </div>
@@ -2084,17 +1988,10 @@ function App() {
                 className="hiddenFileInput"
                 onChange={onFallbackFileChange}
             />
-            {(isLoadingLatest || isLoadingDocument) && (
-                <div
-                    className="loadingOverlay"
-                    aria-label={locale === 'es' ? 'Cargando...' : 'Loading...'}
-                >
-                    <div className="spinner" />
-                    <span className="spinnerLabel">
-                        {locale === 'es' ? 'Cargando...' : 'Loading...'}
-                    </span>
-                </div>
-            )}
+            <LoadingOverlay
+                visible={isLoadingLatest || isLoadingDocument}
+                locale={locale}
+            />
         </main>
     );
 }
