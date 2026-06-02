@@ -5,7 +5,6 @@ import {
 } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import {
-    ChevronDown,
     Download,
     Eye,
     ExternalLink,
@@ -66,6 +65,10 @@ import type { Theme, ViewMode, MaybeFileHandle, RecentDocument, PdfViewerDocumen
 import { LoadingOverlay } from './components/LoadingOverlay/LoadingOverlay';
 import { StatusBar } from './components/StatusBar/StatusBar';
 import { PreviewContent } from './components/PreviewPane/PreviewContent';
+import { ThemeSwitch } from './components/ThemeSwitch/ThemeSwitch';
+import { LocaleSwitch } from './components/LocaleSwitch/LocaleSwitch';
+import { ViewModeSwitch } from './components/ViewModeSwitch/ViewModeSwitch';
+import { FileHistoryMenu } from './components/FileHistoryMenu/FileHistoryMenu';
 
 type LocalFontData = {
     family: string;
@@ -1360,6 +1363,38 @@ function App() {
         exportPdfAsMd: locale === 'es' ? 'Exportar a .md' : 'Export to .md',
     };
 
+    const commitFileNameRename = () => {
+        const previousFilename = fileNameBeforeEditRef.current;
+        const normalized = normalizeFileName(fileName);
+        setFileName(normalized);
+        setIsEditingFileName(false);
+        void persistLatestDocument(
+            normalized,
+            markdown,
+            true,
+            {
+                previousFilename:
+                    previousFilename === normalized
+                        ? undefined
+                        : previousFilename,
+            }
+        );
+    };
+
+    const handleFileNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur();
+        }
+        if (event.key === 'Escape') {
+            setIsEditingFileName(false);
+        }
+    };
+
+    const startFileNameRename = () => {
+        fileNameBeforeEditRef.current = fileName;
+        setIsEditingFileName(true);
+    };
+
     return (
         <main
             className={`app ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}
@@ -1447,154 +1482,32 @@ function App() {
                         <span className="iconBadge">PDF</span>
                     </button>
                 </div>
-                <div className="fileHistory">
-                    {isEditingFileName ? (
-                        <input
-                            ref={fileNameInputRef}
-                            className="fileNameEditor"
-                            value={fileName}
-                            onChange={(event) =>
-                                setFileName(event.target.value)
-                            }
-                            onBlur={() => {
-                                const previousFilename =
-                                    fileNameBeforeEditRef.current;
-                                const normalized = normalizeFileName(fileName);
-                                setFileName(normalized);
-                                setIsEditingFileName(false);
-                                void persistLatestDocument(
-                                    normalized,
-                                    markdown,
-                                    true,
-                                    {
-                                        previousFilename:
-                                            previousFilename === normalized
-                                                ? undefined
-                                                : previousFilename,
-                                    }
-                                );
-                            }}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') {
-                                    event.currentTarget.blur();
-                                }
-                                if (event.key === 'Escape') {
-                                    setIsEditingFileName(false);
-                                }
-                            }}
-                        />
-                    ) : (
-                        <button
-                            type="button"
-                            className="fileHistoryTrigger"
-                            onClick={() => setIsHistoryOpen((open) => !open)}
-                            onDoubleClick={() => {
-                                fileNameBeforeEditRef.current = fileName;
-                                setIsEditingFileName(true);
-                            }}
-                        >
-                            <span>{fileName}</span>
-                            <ChevronDown size={14} />
-                        </button>
-                    )}
-                    {isHistoryOpen && (
-                        <div className="fileHistoryMenu">
-                            {recentDocuments.length === 0 ? (
-                                <button type="button" disabled>
-                                    {locale === 'es'
-                                        ? 'Sin recientes'
-                                        : 'No recent files'}
-                                </button>
-                            ) : (
-                                recentDocuments.map((document) => (
-                                    <button
-                                        key={`${document.filename}-${document.updatedAt}`}
-                                        type="button"
-                                        className={
-                                            document.filename === fileName
-                                                ? 'active'
-                                                : ''
-                                        }
-                                        onClick={() =>
-                                            void openRecentDocument(
-                                                document.filename
-                                            )
-                                        }
-                                    >
-                                        {document.filename}
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-                <div
-                    className="themeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="Theme"
-                >
-                    <button
-                        type="button"
-                        className={theme === 'light' ? 'active' : ''}
-                        onClick={() => setTheme('light')}
-                    >
-                        Light
-                    </button>
-                    <button
-                        type="button"
-                        className={theme === 'dark' ? 'active' : ''}
-                        onClick={() => setTheme('dark')}
-                    >
-                        Dark
-                    </button>
-                </div>
-                <div
-                    className="localeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="Language"
-                >
-                    <button
-                        type="button"
-                        className={locale === 'es' ? 'active' : ''}
-                        onClick={() => setLocale('es')}
-                    >
-                        ES
-                    </button>
-                    <button
-                        type="button"
-                        className={locale === 'en' ? 'active' : ''}
-                        onClick={() => setLocale('en')}
-                    >
-                        US
-                    </button>
-                </div>
-                <div
-                    className="modeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="View mode"
-                >
-                    <button
-                        type="button"
-                        className={viewMode === 'editor' ? 'active' : ''}
-                        onClick={() => setViewMode('editor')}
-                    >
-                        Editor
-                    </button>
-                    <button
-                        type="button"
-                        className={viewMode === 'source' ? 'active' : ''}
-                        onClick={() => setViewMode('source')}
-                    >
-                        .md
-                    </button>
-                    <button
-                        type="button"
-                        className={viewMode === 'preview' ? 'active' : ''}
-                        onClick={() => setViewMode('preview')}
-                    >
-                        Preview
-                    </button>
-                </div>
+                <FileHistoryMenu
+                    fileName={fileName}
+                    recentDocuments={recentDocuments}
+                    isEditingFileName={isEditingFileName}
+                    isHistoryOpen={isHistoryOpen}
+                    locale={locale}
+                    fileNameInputRef={fileNameInputRef}
+                    onFileNameChange={setFileName}
+                    onFileNameCommit={commitFileNameRename}
+                    onFileNameKeyDown={handleFileNameKeyDown}
+                    onToggleHistory={() => setIsHistoryOpen((open) => !open)}
+                    onStartRename={startFileNameRename}
+                    onSelectRecent={(filename) => void openRecentDocument(filename)}
+                />
+                <ThemeSwitch
+                    theme={theme}
+                    onThemeChange={setTheme}
+                />
+                <LocaleSwitch
+                    locale={locale}
+                    onLocaleChange={setLocale}
+                />
+                <ViewModeSwitch
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                />
             </header>
 
             <section className="workspace" data-testid="workspace">
