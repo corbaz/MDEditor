@@ -12,10 +12,8 @@ import {
     FolderOpen,
     Highlighter,
     Palette,
-    Printer,
     Save,
     Trash2,
-    X,
 } from 'lucide-react';
 import {
     BlockTypeSelect,
@@ -69,6 +67,8 @@ import { ThemeSwitch } from './components/ThemeSwitch/ThemeSwitch';
 import { LocaleSwitch } from './components/LocaleSwitch/LocaleSwitch';
 import { ViewModeSwitch } from './components/ViewModeSwitch/ViewModeSwitch';
 import { FileHistoryMenu } from './components/FileHistoryMenu/FileHistoryMenu';
+import { PreviewPane } from './components/PreviewPane/PreviewPane';
+import { PdfModal } from './components/PdfModal/PdfModal';
 
 type LocalFontData = {
     family: string;
@@ -1758,34 +1758,14 @@ function App() {
                 )}
 
                 {viewMode === 'preview' && (
-                    <aside className="previewWrap fullPreview" data-testid="preview-wrap">
-                        <div className="previewHeader previewHeaderRow">
-                            <span>Preview</span>
-                            <button
-                                type="button"
-                                className={`iconBtn actionIcon saveBtn ${saveStatus}`}
-                                onClick={() => void saveToDevice()}
-                                aria-label={actionLabels.save}
-                                data-label={actionLabels.save}
-                            >
-                                <Save size={14} />
-                            </button>
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={() => void printCurrentDocument()}
-                                aria-label={actionLabels.print}
-                                data-label={actionLabels.print}
-                            >
-                                <Printer size={14} />
-                            </button>
-                        </div>
-                        <div className="pdfPreviewViewport screenPreviewViewport">
-                            <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                <PreviewContent markdown={markdown} />
-                            </div>
-                        </div>
-                    </aside>
+                    <PreviewPane
+                        markdown={markdown}
+                        saveStatus={saveStatus}
+                        saveLabel={actionLabels.save}
+                        printLabel={actionLabels.print}
+                        onSave={() => void saveToDevice()}
+                        onPrint={() => void printCurrentDocument()}
+                    />
                 )}
             </section>
 
@@ -1803,96 +1783,18 @@ function App() {
                 </div>
             </div>
 
-            {isPdfPreviewOpen && (
-                <div
-                    className="pdfPreviewOverlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={
-                        pdfViewerDocument
-                            ? locale === 'es'
-                                ? 'Visor PDF'
-                                : 'PDF viewer'
-                            : locale === 'es'
-                              ? 'Vista previa PDF'
-                              : 'PDF preview'
-                    }
-                    onClick={closePdfViewer}
-                >
-                    <div
-                        className="pdfPreviewModal"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className="previewHeader pdfPreviewModalHeader">
-                            <div className="pdfPreviewHeadingGroup">
-                                <span>
-                                    {pdfViewerDocument
-                                        ? locale === 'es'
-                                            ? 'PDF abierto'
-                                            : 'Opened PDF'
-                                        : locale === 'es'
-                                          ? 'Vista previa PDF'
-                                          : 'PDF preview'}
-                                </span>
-                                {pdfViewerDocument && (
-                                    <strong className="pdfPreviewFileName">
-                                        {pdfViewerDocument.filename}
-                                    </strong>
-                                )}
-                            </div>
-                            {pdfViewerDocument && (
-                                <button
-                                    type="button"
-                                    className="iconBtn actionIcon actionBadgeBtn"
-                                    onClick={() =>
-                                        void exportOpenedPdfAsMarkdown()
-                                    }
-                                    aria-label={actionLabels.exportPdfAsMd}
-                                    data-label={actionLabels.exportPdfAsMd}
-                                >
-                                    <Download size={14} />
-                                    <span className="iconBadge">MD</span>
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={() => void printCurrentDocument()}
-                                aria-label={actionLabels.print}
-                                data-label={actionLabels.print}
-                            >
-                                <Printer size={14} />
-                            </button>
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={closePdfViewer}
-                                aria-label={
-                                    locale === 'es' ? 'Cerrar' : 'Close'
-                                }
-                                data-label={
-                                    locale === 'es' ? 'Cerrar' : 'Close'
-                                }
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                        <div className="pdfPreviewViewport">
-                            {pdfViewerDocument ? (
-                                <iframe
-                                    className="pdfViewerFrame"
-                                    src={embeddedPdfUrl}
-                                    title={pdfViewerDocument.filename}
-                                />
-                            ) : (
-                                <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                    <PreviewContent markdown={markdown} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <PdfModal
+                open={isPdfPreviewOpen}
+                pdfViewerDocument={pdfViewerDocument}
+                embeddedPdfUrl={embeddedPdfUrl}
+                markdown={markdown}
+                locale={locale}
+                exportLabel={actionLabels.exportPdfAsMd}
+                printLabel={actionLabels.print}
+                onClose={closePdfViewer}
+                onExportPdfAsMarkdown={() => void exportOpenedPdfAsMarkdown()}
+                onPrint={() => void printCurrentDocument()}
+            />
 
             <input
                 ref={fileInputRef}
