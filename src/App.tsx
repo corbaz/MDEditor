@@ -66,23 +66,7 @@ import {
     type PdfPageLike,
 } from './lib/pdf';
 
-type Theme = 'light' | 'dark';
-type ViewMode = 'editor' | 'source' | 'preview';
-type MaybeFileHandle = {
-    name?: string;
-    createWritable?: () => Promise<{
-        write: (data: string) => Promise<void>;
-        close: () => Promise<void>;
-    }>;
-};
-
-type RecentDocument = {
-    filename: string;
-    updatedAt: number;
-    filePath?: string;
-    folderPath?: string;
-    sizeBytes?: number;
-};
+import type { Theme, ViewMode, MaybeFileHandle, RecentDocument, PdfViewerDocument } from './types';
 
 type LocalFontData = {
     family: string;
@@ -90,12 +74,6 @@ type LocalFontData = {
 
 type WindowWithLocalFonts = Window & {
     queryLocalFonts?: () => Promise<LocalFontData[]>;
-};
-
-type PdfViewerDocument = {
-    filePath: string;
-    filename: string;
-    dataUrl: string;
 };
 
 type EditorDocument = {
