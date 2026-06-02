@@ -1,56 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import {
     GlobalWorkerOptions,
     getDocument,
 } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import {
-    ChevronDown,
-    Download,
-    Eye,
-    ExternalLink,
-    FilePlus,
-    Folder,
-    FolderOpen,
-    Highlighter,
-    Palette,
-    Printer,
-    Save,
-    Trash2,
-    X,
-} from 'lucide-react';
-import {
-    BlockTypeSelect,
-    BoldItalicUnderlineToggles,
-    CodeToggle,
-    CreateLink,
-    InsertCodeBlock,
-    InsertImage,
-    InsertTable,
-    InsertThematicBreak,
-    StrikeThroughSupSubToggles,
-    codeBlockPlugin,
-    codeMirrorPlugin,
-    headingsPlugin,
-    imagePlugin,
-    linkDialogPlugin,
-    linkPlugin,
-    listsPlugin,
-    markdownShortcutPlugin,
-    quotePlugin,
-    tablePlugin,
-    thematicBreakPlugin,
-    toolbarPlugin,
-    type MDXEditorMethods,
-    ListsToggle,
-    MDXEditor,
-    UndoRedo,
-} from '@mdxeditor/editor';
+import { type MDXEditorMethods } from '@mdxeditor/editor';
 import './App.css';
-import { getByteSize, formatFileSize, formatSavedAt, normalizeFileName, type Locale } from './lib/format';
+import { getByteSize, normalizeFileName, type Locale } from './lib/format';
 import { normalizeMarkdownForRichEditor } from './lib/markdown';
 import { escapeHtml, replaceSelectedTextInMarkdown, type InlineStyleKind } from './lib/inline-style';
 import {
@@ -66,23 +22,14 @@ import {
     type PdfPageLike,
 } from './lib/pdf';
 
-type Theme = 'light' | 'dark';
-type ViewMode = 'editor' | 'source' | 'preview';
-type MaybeFileHandle = {
-    name?: string;
-    createWritable?: () => Promise<{
-        write: (data: string) => Promise<void>;
-        close: () => Promise<void>;
-    }>;
-};
-
-type RecentDocument = {
-    filename: string;
-    updatedAt: number;
-    filePath?: string;
-    folderPath?: string;
-    sizeBytes?: number;
-};
+import type { Theme, ViewMode, MaybeFileHandle, RecentDocument, PdfViewerDocument } from './types';
+import { LoadingOverlay } from './components/LoadingOverlay/LoadingOverlay';
+import { StatusBar } from './components/StatusBar/StatusBar';
+import { PreviewContent } from './components/PreviewPane/PreviewContent';
+import { PreviewPane } from './components/PreviewPane/PreviewPane';
+import { PdfModal } from './components/PdfModal/PdfModal';
+import { AppHeader } from './components/AppHeader/AppHeader';
+import { EditorPane } from './components/EditorPane/EditorPane';
 
 type LocalFontData = {
     family: string;
@@ -90,12 +37,6 @@ type LocalFontData = {
 
 type WindowWithLocalFonts = Window & {
     queryLocalFonts?: () => Promise<LocalFontData[]>;
-};
-
-type PdfViewerDocument = {
-    filePath: string;
-    filename: string;
-    dataUrl: string;
 };
 
 type EditorDocument = {
@@ -324,72 +265,6 @@ const extractMarkdownFromPdf = async (
     }
 };
 
-function PreviewImage({
-    src = '',
-    alt = '',
-    width,
-    height,
-}: {
-    src?: string;
-    alt?: string;
-    width?: string | number;
-    height?: string | number;
-}) {
-    const [resolvedImage, setResolvedImage] = useState({
-        source: src,
-        resolved: src,
-    });
-    const localPath = toLocalImagePath(src);
-    const shouldResolveLocalImage =
-        Boolean(localPath) && !isRenderableImageSrc(src);
-    const displaySrc =
-        shouldResolveLocalImage && resolvedImage.source === src
-            ? resolvedImage.resolved
-            : src;
-
-    useEffect(() => {
-        let cancelled = false;
-        const localPath = toLocalImagePath(src);
-
-        if (!localPath || isRenderableImageSrc(src)) return;
-
-        const loadLocalImage = async () => {
-            try {
-                const dataUrl =
-                    await window.electronAPI?.readLocalImageAsDataUrl(
-                        localPath
-                    );
-                if (!cancelled)
-                    setResolvedImage({ source: src, resolved: dataUrl ?? src });
-            } catch {
-                if (!cancelled)
-                    setResolvedImage({ source: src, resolved: src });
-            }
-        };
-
-        void loadLocalImage();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [src]);
-
-    return (
-        <img
-            className="previewImage"
-            src={displaySrc}
-            alt={alt}
-            width={width}
-            height={height}
-            style={{
-                maxWidth: '100%',
-                width: width ? undefined : 'auto',
-                height: height ? undefined : 'auto',
-            }}
-        />
-    );
-}
-
 const initialMarkdown = '';
 
 const textColors = [
@@ -444,53 +319,6 @@ const fileToBase64 = async (file: File) => {
 };
 
 
-const esTranslations: Record<string, string> = {
-    Undo: 'Deshacer',
-    Redo: 'Rehacer',
-    Bold: 'Negrita',
-    Italic: 'Cursiva',
-    Underline: 'Subrayado',
-    Strikethrough: 'Tachado',
-    Superscript: 'Superíndice',
-    Subscript: 'Subíndice',
-    Code: 'Código',
-    Paragraph: 'Párrafo',
-    Quote: 'Cita',
-    'Bulleted list': 'Lista con viñetas',
-    'Numbered list': 'Lista numerada',
-    'Task list': 'Lista de tareas',
-    'Create link': 'Crear enlace',
-    'Insert image': 'Insertar imagen',
-    'Insert table': 'Insertar tabla',
-    'Insert code block': 'Insertar bloque de código',
-    'Insert thematic break': 'Insertar separador',
-    'Rich text': 'Texto enriquecido',
-    Source: 'Fuente',
-    Diff: 'Diferencias',
-    'Upload an image': 'Subir una imagen',
-    'Upload an image from your device:':
-        'Subir una imagen desde tu dispositivo:',
-    'Or add an image from an URL:': 'O agregar una imagen desde una URL:',
-    'Add an image from an URL:': 'Agregar una imagen desde una URL:',
-    'Select or paste an image src': 'Selecciona o pega una URL de imagen',
-    'Alt:': 'Texto alternativo:',
-    'Title:': 'Título:',
-    'Width:': 'Ancho:',
-    'Height:': 'Alto:',
-    Save: 'Guardar',
-    Cancel: 'Cancelar',
-    URL: 'URL',
-    'Select or paste an URL': 'Selecciona o pega una URL',
-    'Anchor text': 'Texto del enlace',
-    'Link title': 'Título del enlace',
-    'Set URL': 'Guardar URL',
-    'Cancel change': 'Cancelar cambio',
-    'Edit link URL': 'Editar enlace',
-    'Copy to clipboard': 'Copiar al portapapeles',
-    'Copied!': 'Copiado!',
-    'Remove link': 'Eliminar enlace',
-};
-
 function App() {
     const [locale, setLocale] = useState<Locale>('es');
     const [theme, setTheme] = useState<Theme>('dark');
@@ -533,26 +361,6 @@ function App() {
     const saveStatusTimeoutRef = useRef<number | null>(null);
     const lastAutoSavedSignatureRef = useRef('');
     const pendingEditorMarkdownRef = useRef<string | null>(null);
-
-    const translation = (
-        key: string,
-        defaultValue: string,
-        interpolations?: Record<string, string | number>
-    ) => {
-        if (key === 'toolbar.blockTypes.heading' && interpolations?.level) {
-            return `H${interpolations.level}`;
-        }
-
-        const translated =
-            locale === 'en'
-                ? defaultValue
-                : (esTranslations[defaultValue] ?? defaultValue);
-        return Object.entries(interpolations ?? {}).reduce(
-            (label, [name, value]) =>
-                label.replaceAll(`{{${name}}}`, String(value)),
-            translated
-        );
-    };
 
     const imageUploadHandler = useMemo(
         () => async (image: File) => {
@@ -921,34 +729,6 @@ function App() {
         anchor.click();
         URL.revokeObjectURL(url);
     };
-
-    const renderPreviewMarkdown = () => (
-        <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            urlTransform={(url) => {
-                if (
-                    /^data:image\/(?:gif|jpeg|jpg|png|webp|svg\+xml);base64,/i.test(
-                        url
-                    )
-                )
-                    return url;
-                return url;
-            }}
-            components={{
-                img: ({ src = '', alt = '', width, height }) => (
-                    <PreviewImage
-                        src={src}
-                        alt={alt}
-                        width={width}
-                        height={height}
-                    />
-                ),
-            }}
-        >
-            {markdown}
-        </ReactMarkdown>
-    );
 
     const waitForPreviewAssets = useCallback(async (root: HTMLElement) => {
         const images = Array.from(root.querySelectorAll('img'));
@@ -1477,478 +1257,105 @@ function App() {
         exportPdfAsMd: locale === 'es' ? 'Exportar a .md' : 'Export to .md',
     };
 
+    const commitFileNameRename = () => {
+        const previousFilename = fileNameBeforeEditRef.current;
+        const normalized = normalizeFileName(fileName);
+        setFileName(normalized);
+        setIsEditingFileName(false);
+        void persistLatestDocument(
+            normalized,
+            markdown,
+            true,
+            {
+                previousFilename:
+                    previousFilename === normalized
+                        ? undefined
+                        : previousFilename,
+            }
+        );
+    };
+
+    const handleFileNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur();
+        }
+        if (event.key === 'Escape') {
+            setIsEditingFileName(false);
+        }
+    };
+
+    const startFileNameRename = () => {
+        fileNameBeforeEditRef.current = fileName;
+        setIsEditingFileName(true);
+    };
+
     return (
         <main
             className={`app ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}
             data-testid="app-root"
         >
-            <header className="appHeader" data-testid="app-header">
-                <div className="headerLeft">
-                    <h1>MD Editor</h1>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon"
-                        onClick={() => void createNewDocument()}
-                        aria-label={actionLabels.create}
-                        data-label={actionLabels.create}
-                        data-testid="btn-new"
-                    >
-                        <FilePlus size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon"
-                        onClick={openFromDevice}
-                        aria-label={actionLabels.open}
-                        data-label={actionLabels.open}
-                    >
-                        <FolderOpen size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className={`iconBtn actionIcon saveBtn ${saveStatus}`}
-                        onClick={saveToDevice}
-                        aria-label={actionLabels.save}
-                        data-label={actionLabels.save}
-                        data-testid="btn-save"
-                    >
-                        <Save size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon dangerBtn"
-                        onClick={() => void deleteCurrentFile()}
-                        aria-label={actionLabels.delete}
-                        data-label={actionLabels.delete}
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={downloadMarkdown}
-                        aria-label={actionLabels.downloadMd}
-                        data-label={actionLabels.downloadMd}
-                    >
-                        <Download size={16} />
-                        <span className="iconBadge">MD</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={openGeneratedPdfPreview}
-                        aria-label={actionLabels.previewPdf}
-                        data-label={actionLabels.previewPdf}
-                    >
-                        <Eye size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={() => void openPdf()}
-                        aria-label={actionLabels.openPdf}
-                        data-label={actionLabels.openPdf}
-                    >
-                        <ExternalLink size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="iconBtn actionIcon actionBadgeBtn"
-                        onClick={() => void downloadPdf()}
-                        aria-label={actionLabels.downloadPdf}
-                        data-label={actionLabels.downloadPdf}
-                    >
-                        <Download size={16} />
-                        <span className="iconBadge">PDF</span>
-                    </button>
-                </div>
-                <div className="fileHistory">
-                    {isEditingFileName ? (
-                        <input
-                            ref={fileNameInputRef}
-                            className="fileNameEditor"
-                            value={fileName}
-                            onChange={(event) =>
-                                setFileName(event.target.value)
-                            }
-                            onBlur={() => {
-                                const previousFilename =
-                                    fileNameBeforeEditRef.current;
-                                const normalized = normalizeFileName(fileName);
-                                setFileName(normalized);
-                                setIsEditingFileName(false);
-                                void persistLatestDocument(
-                                    normalized,
-                                    markdown,
-                                    true,
-                                    {
-                                        previousFilename:
-                                            previousFilename === normalized
-                                                ? undefined
-                                                : previousFilename,
-                                    }
-                                );
-                            }}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') {
-                                    event.currentTarget.blur();
-                                }
-                                if (event.key === 'Escape') {
-                                    setIsEditingFileName(false);
-                                }
-                            }}
-                        />
-                    ) : (
-                        <button
-                            type="button"
-                            className="fileHistoryTrigger"
-                            onClick={() => setIsHistoryOpen((open) => !open)}
-                            onDoubleClick={() => {
-                                fileNameBeforeEditRef.current = fileName;
-                                setIsEditingFileName(true);
-                            }}
-                        >
-                            <span>{fileName}</span>
-                            <ChevronDown size={14} />
-                        </button>
-                    )}
-                    {isHistoryOpen && (
-                        <div className="fileHistoryMenu">
-                            {recentDocuments.length === 0 ? (
-                                <button type="button" disabled>
-                                    {locale === 'es'
-                                        ? 'Sin recientes'
-                                        : 'No recent files'}
-                                </button>
-                            ) : (
-                                recentDocuments.map((document) => (
-                                    <button
-                                        key={`${document.filename}-${document.updatedAt}`}
-                                        type="button"
-                                        className={
-                                            document.filename === fileName
-                                                ? 'active'
-                                                : ''
-                                        }
-                                        onClick={() =>
-                                            void openRecentDocument(
-                                                document.filename
-                                            )
-                                        }
-                                    >
-                                        {document.filename}
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-                <div
-                    className="themeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="Theme"
-                >
-                    <button
-                        type="button"
-                        className={theme === 'light' ? 'active' : ''}
-                        onClick={() => setTheme('light')}
-                    >
-                        Light
-                    </button>
-                    <button
-                        type="button"
-                        className={theme === 'dark' ? 'active' : ''}
-                        onClick={() => setTheme('dark')}
-                    >
-                        Dark
-                    </button>
-                </div>
-                <div
-                    className="localeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="Language"
-                >
-                    <button
-                        type="button"
-                        className={locale === 'es' ? 'active' : ''}
-                        onClick={() => setLocale('es')}
-                    >
-                        ES
-                    </button>
-                    <button
-                        type="button"
-                        className={locale === 'en' ? 'active' : ''}
-                        onClick={() => setLocale('en')}
-                    >
-                        US
-                    </button>
-                </div>
-                <div
-                    className="modeSwitch segmentedSwitch"
-                    role="group"
-                    aria-label="View mode"
-                >
-                    <button
-                        type="button"
-                        className={viewMode === 'editor' ? 'active' : ''}
-                        onClick={() => setViewMode('editor')}
-                    >
-                        Editor
-                    </button>
-                    <button
-                        type="button"
-                        className={viewMode === 'source' ? 'active' : ''}
-                        onClick={() => setViewMode('source')}
-                    >
-                        .md
-                    </button>
-                    <button
-                        type="button"
-                        className={viewMode === 'preview' ? 'active' : ''}
-                        onClick={() => setViewMode('preview')}
-                    >
-                        Preview
-                    </button>
-                </div>
-            </header>
+            <AppHeader
+                theme={theme}
+                locale={locale}
+                viewMode={viewMode}
+                fileName={fileName}
+                recentDocuments={recentDocuments}
+                isEditingFileName={isEditingFileName}
+                isHistoryOpen={isHistoryOpen}
+                fileNameInputRef={fileNameInputRef}
+                actionLabels={actionLabels}
+                saveStatus={saveStatus}
+                onNew={() => void createNewDocument()}
+                onOpen={openFromDevice}
+                onSave={saveToDevice}
+                onDelete={() => void deleteCurrentFile()}
+                onDownloadMd={downloadMarkdown}
+                onPreviewPdf={openGeneratedPdfPreview}
+                onOpenPdf={() => void openPdf()}
+                onDownloadPdf={() => void downloadPdf()}
+                onThemeChange={setTheme}
+                onLocaleChange={setLocale}
+                onViewModeChange={setViewMode}
+                onFileNameChange={setFileName}
+                onFileNameCommit={commitFileNameRename}
+                onFileNameKeyDown={handleFileNameKeyDown}
+                onToggleHistory={() => setIsHistoryOpen((open) => !open)}
+                onStartRename={startFileNameRename}
+                onSelectRecent={(filename) => void openRecentDocument(filename)}
+            />
 
             <section className="workspace" data-testid="workspace">
                 {viewMode === 'editor' && (
-                    <div className="editorWrap" data-testid="editor-wrap">
-                        <MDXEditor
-                            key={editorDocumentKey}
-                            ref={editorRef}
-                            markdown={markdown}
-                            onChange={setMarkdown}
-                            translation={translation}
-                            className="editor"
-                            plugins={[
-                                headingsPlugin(),
-                                listsPlugin(),
-                                linkPlugin(),
-                                linkDialogPlugin(),
-                                quotePlugin(),
-                                tablePlugin(),
-                                imagePlugin({
-                                    imageUploadHandler,
-                                    imagePreviewHandler,
-                                    allowSetImageDimensions: true,
-                                }),
-                                codeBlockPlugin({
-                                    defaultCodeBlockLanguage: 'txt',
-                                }),
-                                codeMirrorPlugin({
-                                    codeBlockLanguages: {
-                                        txt: 'Text',
-                                        js: 'JavaScript',
-                                        ts: 'TypeScript',
-                                        css: 'CSS',
-                                        html: 'HTML',
-                                        json: 'JSON',
-                                        md: 'Markdown',
-                                        bash: 'Bash',
-                                    },
-                                }),
-                                thematicBreakPlugin(),
-                                markdownShortcutPlugin(),
-                                toolbarPlugin({
-                                    toolbarContents: () => (
-                                        <>
-                                            <UndoRedo />
-                                            <BoldItalicUnderlineToggles />
-                                            <StrikeThroughSupSubToggles />
-                                            <CodeToggle />
-                                            <BlockTypeSelect />
-                                            <ListsToggle />
-                                            <CreateLink />
-                                            <InsertImage />
-                                            <InsertTable />
-                                            <InsertCodeBlock />
-                                            <InsertThematicBreak />
-                                            <div
-                                                className="styleTools"
-                                                onMouseDown={rememberSelection}
-                                            >
-                                                <div
-                                                    className="styleToolGroup"
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Color de texto'
-                                                            : 'Text color'
-                                                    }
-                                                >
-                                                    <Palette size={15} />
-                                                    {textColors.map((color) => (
-                                                        <button
-                                                            key={color}
-                                                            type="button"
-                                                            className="colorSwatch"
-                                                            style={{
-                                                                backgroundColor:
-                                                                    color,
-                                                            }}
-                                                            aria-label={
-                                                                locale === 'es'
-                                                                    ? 'Color de texto'
-                                                                    : 'Text color'
-                                                            }
-                                                            onMouseDown={(
-                                                                event
-                                                            ) =>
-                                                                event.preventDefault()
-                                                            }
-                                                            onClick={() => {
-                                                                setSelectedTextColor(
-                                                                    color
-                                                                );
-                                                                applyInlineStyle(
-                                                                    'textColor',
-                                                                    color
-                                                                );
-                                                            }}
-                                                        />
-                                                    ))}
-                                                    <input
-                                                        type="color"
-                                                        value={
-                                                            selectedTextColor
-                                                        }
-                                                        aria-label={
-                                                            locale === 'es'
-                                                                ? 'Elegir color de texto'
-                                                                : 'Choose text color'
-                                                        }
-                                                        onChange={(event) => {
-                                                            setSelectedTextColor(
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                            applyInlineStyle(
-                                                                'textColor',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div
-                                                    className="styleToolGroup"
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Fondo resaltado'
-                                                            : 'Highlight'
-                                                    }
-                                                >
-                                                    <Highlighter size={15} />
-                                                    {highlightColors.map(
-                                                        (color) => (
-                                                            <button
-                                                                key={color}
-                                                                type="button"
-                                                                className="colorSwatch"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        color,
-                                                                }}
-                                                                aria-label={
-                                                                    locale ===
-                                                                    'es'
-                                                                        ? 'Fondo resaltado'
-                                                                        : 'Highlight'
-                                                                }
-                                                                onMouseDown={(
-                                                                    event
-                                                                ) =>
-                                                                    event.preventDefault()
-                                                                }
-                                                                onClick={() => {
-                                                                    setSelectedHighlightColor(
-                                                                        color
-                                                                    );
-                                                                    applyInlineStyle(
-                                                                        'highlight',
-                                                                        color
-                                                                    );
-                                                                }}
-                                                            />
-                                                        )
-                                                    )}
-                                                    <input
-                                                        type="color"
-                                                        value={
-                                                            selectedHighlightColor
-                                                        }
-                                                        aria-label={
-                                                            locale === 'es'
-                                                                ? 'Elegir fondo resaltado'
-                                                                : 'Choose highlight'
-                                                        }
-                                                        onChange={(event) => {
-                                                            setSelectedHighlightColor(
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                            applyInlineStyle(
-                                                                'highlight',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                                <select
-                                                    className="fontSelect"
-                                                    value={selectedFont}
-                                                    title={
-                                                        locale === 'es'
-                                                            ? 'Fuente'
-                                                            : 'Font'
-                                                    }
-                                                    aria-label={
-                                                        locale === 'es'
-                                                            ? 'Fuente'
-                                                            : 'Font'
-                                                    }
-                                                    onMouseDown={
-                                                        rememberSelection
-                                                    }
-                                                    onChange={(event) => {
-                                                        setSelectedFont(
-                                                            event.target.value
-                                                        );
-                                                        if (
-                                                            event.target
-                                                                .value !==
-                                                            'System'
-                                                        ) {
-                                                            applyInlineStyle(
-                                                                'font',
-                                                                event.target
-                                                                    .value
-                                                            );
-                                                        }
-                                                    }}
-                                                >
-                                                    {availableFonts.map(
-                                                        (font) => (
-                                                            <option
-                                                                key={font}
-                                                                value={font}
-                                                            >
-                                                                {font}
-                                                            </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                            </div>
-                                        </>
-                                    ),
-                                }),
-                            ]}
-                        />
-                    </div>
+                    <EditorPane
+                        ref={editorRef}
+                        locale={locale}
+                        markdown={markdown}
+                        editorDocumentKey={editorDocumentKey}
+                        imageUploadHandler={imageUploadHandler}
+                        imagePreviewHandler={imagePreviewHandler}
+                        textColors={textColors}
+                        highlightColors={highlightColors}
+                        availableFonts={availableFonts}
+                        selectedTextColor={selectedTextColor}
+                        selectedHighlightColor={selectedHighlightColor}
+                        selectedFont={selectedFont}
+                        onApplyTextColor={(color) => {
+                            setSelectedTextColor(color);
+                            applyInlineStyle('textColor', color);
+                        }}
+                        onApplyHighlight={(color) => {
+                            setSelectedHighlightColor(color);
+                            applyInlineStyle('highlight', color);
+                        }}
+                        onApplyFont={(font) => {
+                            setSelectedFont(font);
+                            if (font !== 'System') {
+                                applyInlineStyle('font', font);
+                            }
+                        }}
+                        onRememberSelection={rememberSelection}
+                        onChange={setMarkdown}
+                    />
                 )}
 
                 {viewMode === 'source' && (
@@ -1962,142 +1369,43 @@ function App() {
                 )}
 
                 {viewMode === 'preview' && (
-                    <aside className="previewWrap fullPreview" data-testid="preview-wrap">
-                        <div className="previewHeader previewHeaderRow">
-                            <span>Preview</span>
-                            <button
-                                type="button"
-                                className={`iconBtn actionIcon saveBtn ${saveStatus}`}
-                                onClick={() => void saveToDevice()}
-                                aria-label={actionLabels.save}
-                                data-label={actionLabels.save}
-                            >
-                                <Save size={14} />
-                            </button>
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={() => void printCurrentDocument()}
-                                aria-label={actionLabels.print}
-                                data-label={actionLabels.print}
-                            >
-                                <Printer size={14} />
-                            </button>
-                        </div>
-                        <div className="pdfPreviewViewport screenPreviewViewport">
-                            <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                {renderPreviewMarkdown()}
-                            </div>
-                        </div>
-                    </aside>
+                    <PreviewPane
+                        markdown={markdown}
+                        saveStatus={saveStatus}
+                        saveLabel={actionLabels.save}
+                        printLabel={actionLabels.print}
+                        onSave={() => void saveToDevice()}
+                        onPrint={() => void printCurrentDocument()}
+                    />
                 )}
             </section>
 
-            <footer className="app-footer" data-testid="app-footer-status">
-                <div className="fileMeta" title={folderPath || visibleFolder}>
-                    <Folder size={13} />
-                    <span className="fileMetaFolder">{visibleFolder}</span>
-                    <span>{formatFileSize(currentSizeBytes)}</span>
-                    <span>{formatSavedAt(lastSavedAt, locale)}</span>
-                </div>
-            </footer>
+            <StatusBar
+                folderPath={folderPath}
+                visibleFolder={visibleFolder}
+                currentSizeBytes={currentSizeBytes}
+                lastSavedAt={lastSavedAt}
+                locale={locale}
+            />
 
             <div className="pdfPreviewStaging" aria-hidden="true">
                 <div ref={previewExportRef} className="pdfPreviewPage">
-                    {renderPreviewMarkdown()}
+                    <PreviewContent markdown={markdown} />
                 </div>
             </div>
 
-            {isPdfPreviewOpen && (
-                <div
-                    className="pdfPreviewOverlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={
-                        pdfViewerDocument
-                            ? locale === 'es'
-                                ? 'Visor PDF'
-                                : 'PDF viewer'
-                            : locale === 'es'
-                              ? 'Vista previa PDF'
-                              : 'PDF preview'
-                    }
-                    onClick={closePdfViewer}
-                >
-                    <div
-                        className="pdfPreviewModal"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className="previewHeader pdfPreviewModalHeader">
-                            <div className="pdfPreviewHeadingGroup">
-                                <span>
-                                    {pdfViewerDocument
-                                        ? locale === 'es'
-                                            ? 'PDF abierto'
-                                            : 'Opened PDF'
-                                        : locale === 'es'
-                                          ? 'Vista previa PDF'
-                                          : 'PDF preview'}
-                                </span>
-                                {pdfViewerDocument && (
-                                    <strong className="pdfPreviewFileName">
-                                        {pdfViewerDocument.filename}
-                                    </strong>
-                                )}
-                            </div>
-                            {pdfViewerDocument && (
-                                <button
-                                    type="button"
-                                    className="iconBtn actionIcon actionBadgeBtn"
-                                    onClick={() =>
-                                        void exportOpenedPdfAsMarkdown()
-                                    }
-                                    aria-label={actionLabels.exportPdfAsMd}
-                                    data-label={actionLabels.exportPdfAsMd}
-                                >
-                                    <Download size={14} />
-                                    <span className="iconBadge">MD</span>
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={() => void printCurrentDocument()}
-                                aria-label={actionLabels.print}
-                                data-label={actionLabels.print}
-                            >
-                                <Printer size={14} />
-                            </button>
-                            <button
-                                type="button"
-                                className="iconBtn actionIcon"
-                                onClick={closePdfViewer}
-                                aria-label={
-                                    locale === 'es' ? 'Cerrar' : 'Close'
-                                }
-                                data-label={
-                                    locale === 'es' ? 'Cerrar' : 'Close'
-                                }
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                        <div className="pdfPreviewViewport">
-                            {pdfViewerDocument ? (
-                                <iframe
-                                    className="pdfViewerFrame"
-                                    src={embeddedPdfUrl}
-                                    title={pdfViewerDocument.filename}
-                                />
-                            ) : (
-                                <div className="pdfPreviewPage pdfPreviewPageVisible">
-                                    {renderPreviewMarkdown()}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <PdfModal
+                open={isPdfPreviewOpen}
+                pdfViewerDocument={pdfViewerDocument}
+                embeddedPdfUrl={embeddedPdfUrl}
+                markdown={markdown}
+                locale={locale}
+                exportLabel={actionLabels.exportPdfAsMd}
+                printLabel={actionLabels.print}
+                onClose={closePdfViewer}
+                onExportPdfAsMarkdown={() => void exportOpenedPdfAsMarkdown()}
+                onPrint={() => void printCurrentDocument()}
+            />
 
             <input
                 ref={fileInputRef}
@@ -2106,17 +1414,10 @@ function App() {
                 className="hiddenFileInput"
                 onChange={onFallbackFileChange}
             />
-            {(isLoadingLatest || isLoadingDocument) && (
-                <div
-                    className="loadingOverlay"
-                    aria-label={locale === 'es' ? 'Cargando...' : 'Loading...'}
-                >
-                    <div className="spinner" />
-                    <span className="spinnerLabel">
-                        {locale === 'es' ? 'Cargando...' : 'Loading...'}
-                    </span>
-                </div>
-            )}
+            <LoadingOverlay
+                visible={isLoadingLatest || isLoadingDocument}
+                locale={locale}
+            />
         </main>
     );
 }
